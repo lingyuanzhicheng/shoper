@@ -1,0 +1,7 @@
+{{define "content_about"}}
+                <div class="page-header"><div><h2 class="page-header-title">关于本店</h2></div></div>
+                <div class="business-card about-card">
+                    <h3 class="text-center text-lg font-semibold text-gray-800 dark:text-white mb-4">{{.AboutTitle}}</h3>
+                    <div class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300" id="md-about" data-md="{{.AboutContentRaw}}"></div>
+                </div>
+{{end}}

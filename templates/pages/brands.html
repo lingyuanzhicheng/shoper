@@ -1,0 +1,13 @@
+{{define "content_brands"}}
+                <div class="page-header"><div><h2 class="page-header-title">品牌列表</h2></div></div>
+                <script>window.allProductsData={{json .AllProducts}};window.allCategoriesData={{json .AllCategories}};</script>
+                <div class="cat-masonry brand-masonry">
+                    {{range .AllBrands}}
+                    <div class="brand-card"><div class="brand-logo-wrap">{{if .Logo}}<img src="{{.Logo}}" alt="{{.Name}}">{{else}}<span>品</span>{{end}}</div>
+                        <div class="brand-card-main"><div class="brand-card-name">{{.Name}}</div><div class="brand-card-desc">{{if .Description}}{{.Description}}{{else}}暂无介绍{{end}}</div></div>
+                        <div class="brand-card-actions brand-card-actions-tr"><button type="button" onclick="openBrandProductsModal(this)" data-brand="{{.Name}}" aria-label="查看该品牌商品" title="查看该品牌商品"><i class="sui-Storeshope-commerce"></i></button></div>
+                    </div>
+                    {{end}}
+                </div>
+                {{template "pagination" .}}
+{{end}}

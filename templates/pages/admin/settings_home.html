@@ -1,0 +1,128 @@
+{{define "content_admin_settings-home"}}
+                <div class="admin-shell">
+                    <div class="page-header"><div><h2 class="page-header-title">首页设置</h2><p class="page-header-desc">配置首页展示图、轮播与推荐商品。</p></div></div>
+                    <script>window.homeCarousel1={{json .HomeSettings.Carousel1}};window.homeCarousel2={{json .HomeSettings.Carousel2}};window.homeRecommendIds={{json .HomeSettings.RecommendIDs}};</script>
+
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Photo form-section-icon"></i>展示图</h3>
+                                    <p class="settings-card-desc">第一行左右两张展示图，可配置跳转链接与配文</p>
+                                </div>
+                                <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="section" value="hero">
+                                    <input type="hidden" name="home_hero_left_img" id="hero-left-img" value="{{.HomeSettings.HeroLeftImg}}">
+                                    <input type="hidden" name="home_hero_left_link" id="hero-left-link" value="{{.HomeSettings.HeroLeftLink}}">
+                                    <input type="hidden" name="home_hero_left_text" id="hero-left-text" value="{{.HomeSettings.HeroLeftText}}">
+                                    <input type="hidden" name="home_hero_right_img" id="hero-right-img" value="{{.HomeSettings.HeroRightImg}}">
+                                    <input type="hidden" name="home_hero_right_link" id="hero-right-link" value="{{.HomeSettings.HeroRightLink}}">
+                                    <input type="hidden" name="home_hero_right_text" id="hero-right-text" value="{{.HomeSettings.HeroRightText}}">
+                                    <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="settings-home-hero">
+                            <div class="settings-home-side">
+                                <div class="settings-home-label">左展示图</div>
+                                <div class="settings-upload-preview" x-data="{url:'{{.HomeSettings.HeroLeftImg}}'}" @click="$refs.f.click()">
+                                    <img x-show="url" :src="url">
+                                    <span x-show="!url" class="settings-upload-placeholder">点击上传图片</span>
+                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-left-img').value=d.url})">
+                                </div>
+                                <input value="{{.HomeSettings.HeroLeftText}}" placeholder="配文（如 精选空间材料）" oninput="document.getElementById('hero-left-text').value=this.value">
+                                <input value="{{.HomeSettings.HeroLeftLink}}" placeholder="跳转链接（留空不跳转）" oninput="document.getElementById('hero-left-link').value=this.value">
+                            </div>
+                            <div class="settings-home-side">
+                                <div class="settings-home-label">右展示图</div>
+                                <div class="settings-upload-preview" x-data="{url:'{{.HomeSettings.HeroRightImg}}'}" @click="$refs.f.click()">
+                                    <img x-show="url" :src="url">
+                                    <span x-show="!url" class="settings-upload-placeholder">点击上传图片</span>
+                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-right-img').value=d.url})">
+                                </div>
+                                <input value="{{.HomeSettings.HeroRightText}}" placeholder="配文（如 灯光系统）" oninput="document.getElementById('hero-right-text').value=this.value">
+                                <input value="{{.HomeSettings.HeroRightLink}}" placeholder="跳转链接（留空不跳转）" oninput="document.getElementById('hero-right-link').value=this.value">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="business-card settings-card" x-data="{
+  carousel1: window.homeCarousel1,
+  carousel2: window.homeCarousel2,
+  moveUp(arr, idx) { if(idx > 0) { var item = arr[idx]; arr.splice(idx, 1); arr.splice(idx-1, 0, item); }},
+  moveDown(arr, idx) { if(idx < arr.length - 1) { var item = arr[idx]; arr.splice(idx, 1); arr.splice(idx+1, 0, item); }}
+}" @add-slide.document="if($event.detail.target==='carousel1') carousel1.push($event.detail.slide); else if($event.detail.target==='carousel2') carousel2.push($event.detail.slide)">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Lensshutter form-section-icon"></i>轮播图</h3>
+                                    <p class="settings-card-desc">第二行左右两个轮播，点击添加弹窗选择图片+文本+链接</p>
+                                </div>
+                                <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="section" value="carousel">
+                                    <input type="hidden" name="home_carousel1" :value="JSON.stringify(carousel1)">
+                                    <input type="hidden" name="home_carousel2" :value="JSON.stringify(carousel2)">
+                                    <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="settings-home-carousel">
+                            <div class="settings-home-side">
+                                <div class="settings-home-label">左侧轮播</div>
+                                <div class="home-slide-list">
+                                    <template x-for="(slide, idx) in carousel1" :key="idx">
+                                        <div class="home-slide-item">
+                                            <img :src="slide.img" class="home-slide-thumb">
+                                            <div class="home-slide-info"><div class="home-slide-text" x-text="slide.text"></div><div class="home-slide-link" x-text="slide.link"></div></div>
+                                            <div class="home-slide-actions"><button type="button" class="home-slide-btn" @click="moveUp(carousel1, idx)" title="上移"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></button><button type="button" class="home-slide-btn" @click="moveDown(carousel1, idx)" title="下移"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button><button type="button" class="home-slide-btn home-slide-btn-del" @click="carousel1.splice(idx,1)" title="删除"><i class="sui-Trashcancontrol" style="font-size:16px"></i></button></div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <button type="button" class="home-slide-add" @click="openHomeCarouselModal('carousel1')">+ 添加轮播图</button>
+                            </div>
+                            <div class="settings-home-side">
+                                <div class="settings-home-label">右侧轮播</div>
+                                <div class="home-slide-list">
+                                    <template x-for="(slide, idx) in carousel2" :key="idx">
+                                        <div class="home-slide-item">
+                                            <img :src="slide.img" class="home-slide-thumb">
+                                            <div class="home-slide-info"><div class="home-slide-text" x-text="slide.text"></div><div class="home-slide-link" x-text="slide.link"></div></div>
+                                            <div class="home-slide-actions"><button type="button" class="home-slide-btn" @click="moveUp(carousel2, idx)" title="上移"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></button><button type="button" class="home-slide-btn" @click="moveDown(carousel2, idx)" title="下移"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button><button type="button" class="home-slide-btn home-slide-btn-del" @click="carousel2.splice(idx,1)" title="删除"><i class="sui-Trashcancontrol" style="font-size:16px"></i></button></div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <button type="button" class="home-slide-add" @click="openHomeCarouselModal('carousel2')">+ 添加轮播图</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Star form-section-icon"></i>推荐商品</h3>
+                                    <p class="settings-card-desc">首页展示的推荐商品，点击添加从已有商品中选择</p>
+                                </div>
+                                <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="section" value="recommend">
+                                    <input type="hidden" name="home_recommend_ids" id="home-recommend-ids" value="{{json .HomeSettings.RecommendIDs}}">
+                                    <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="shop-product-grid admin-product-grid pb-2" id="home-recommend-list">
+                            <button type="button" class="product-card product-add-card" onclick="openHomeRecommendModal()"><span class="cat-create-tile-icon">+</span><span>添加商品</span></button>
+                            {{range .Products}}
+                            <div class="product-card admin-product-card group home-recommend-item" data-product-id="{{.ID}}">
+                                <div class="media media-4x3">{{if .Images}}<div class="media-content rounded" style="background-image:url({{index .Images 0}})" title="{{.Name}}"></div>{{else}}<div class="media-content rounded flex items-center justify-center bg-gray-100 dark:bg-gray-800"><i class="sui-Photo text-gray-300 text-2xl"></i></div>{{end}}</div>
+                                <div class="product-info text-sm">
+                                    <div class="product-title line-clamp-2">{{.Name}}</div>
+                                    <div class="mt-3 flex items-center justify-between"><div class="flex items-center break-all"><img src="{{.BrandLogo}}" class="object-cover size-5 rounded-full mr-1" alt="{{.Brand}}"><span class="text-xs text-gray-500">{{.Brand}}</span></div><div class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}</span><span class="text-gray-400"> / {{.Unit}}</span></div></div>
+                                    <div class="admin-product-actions"><span class="admin-product-actions-left"><button type="button" onclick="moveUpHomeRecommend({{.ID}})">上移</button><button type="button" onclick="moveDownHomeRecommend({{.ID}})">下移</button></span><form class="admin-product-delete-form" style="display:contents"><button type="button" onclick="removeHomeRecommend({{.ID}})">移除</button></form></div>
+                                </div>
+                            </div>
+                            {{end}}
+                        </div>
+                    </section>
+                </div>
+{{end}}

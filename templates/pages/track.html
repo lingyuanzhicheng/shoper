@@ -1,0 +1,181 @@
+{{define "content_track"}}
+                <div class="page-header"><div><h2 class="page-header-title">订单追踪</h2></div></div>
+                {{if .Order.Hash}}{{else}}
+                <div class="track-search-wrap">
+                    <div class="business-card track-search-card">
+                        <h1 class="text-xl font-semibold mb-2 dark:text-white">订单追踪</h1>
+                        <p class="text-xs text-gray-400 mb-5">请输入订单号和电话号码查询订单状态。</p>
+                        <form method="post" action="/track" class="track-search-form">
+                            <input name="hash" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="订单号" value="{{if .Order.Hash}}{{.Order.Hash}}{{else}}{{.Query}}{{end}}">
+                            <input name="phone" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="电话号码" value="{{.Order.Phone}}">
+                            <button type="submit">查询订单</button>
+                        </form>
+                    </div>
+                </div>
+                {{end}}
+                {{if .Order.Hash}}
+                <div class="order-detail-cart-layout track-order-detail">
+                    <div class="order-detail-side">
+                        <section class="business-card order-customer-card">
+                            <div class="order-section-title">客户信息</div>
+                            <div class="order-customer-fields">
+                                <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">联系人</label><div class="track-field-value">{{if .Order.ContactName}}{{.Order.ContactName}}{{else}}—{{end}}</div></div><div><label class="text-sm text-gray-600 dark:text-gray-400">联系电话</label><div class="track-field-value">{{if .Order.Phone}}{{.Order.Phone}}{{else}}—{{end}}</div></div></div>
+                                <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">小区名称</label><div class="track-field-value">{{if .Order.Community}}{{.Order.Community}}{{else}}—{{end}}</div></div><div><label class="text-sm text-gray-600 dark:text-gray-400">楼栋号</label><div class="track-field-value">{{if .Order.Building}}{{.Order.Building}}{{else}}—{{end}}</div></div></div>
+                                <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">单元号</label><div class="track-field-value">{{if .Order.UnitNo}}{{.Order.UnitNo}}{{else}}—{{end}}</div></div><div><label class="text-sm text-gray-600 dark:text-gray-400">房号</label><div class="track-field-value">{{if .Order.Room}}{{.Order.Room}}{{else}}—{{end}}</div></div></div>
+                                <div class="order-notes-field">
+                                    <label class="text-sm text-gray-600 dark:text-gray-400">备注说明</label>
+                                    <div class="track-field-value track-field-textarea">{{if .Order.Notes}}{{.Order.Notes}}{{end}}</div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="business-card order-summary-card">
+                            <div class="order-section-title">订单金额</div>
+                            <div class="order-info-stack">
+                                <div class="order-info-field">
+                                    <label class="text-sm text-gray-600 dark:text-gray-400">抹零/优惠金额</label>
+                                    <div class="track-field-value" style="text-align:right">¥{{price .Order.DiscountCents}}</div>
+                                </div>
+                                <div class="order-info-field">
+                                    <label class="text-sm text-gray-600 dark:text-gray-400">已付金额</label>
+                                    <div class="track-field-value" style="text-align:right">¥{{price .Order.PaidCents}}</div>
+                                </div>
+                            </div>
+                            <div class="order-total-box">
+                                <div class="order-total-row">
+                                    <span class="order-total-label">订单合计</span>
+                                    <div class="order-total-amounts">
+                                        {{if ne .Order.DiscountCents 0}}<span class="order-original-total">¥{{price (add .Order.TotalCents .Order.DiscountCents)}}</span>{{end}}
+                                        <strong>¥{{price .Order.TotalCents}}</strong>
+                                    </div>
+                                </div>
+                                <div id="order-table-total" class="hidden">¥{{price .Order.TotalCents}}</div>
+                            </div>
+                            <div class="order-total-box order-total-paid">
+                                <div class="order-total-row">
+                                    <span class="order-total-label">已付金额</span>
+                                    <strong class="order-paid-amount">¥{{price .Order.PaidCents}}</strong>
+                                </div>
+                            </div>
+                            <div class="order-total-box order-total-due">
+                                <div class="order-total-row">
+                                    <span class="order-total-label">应付金额</span>
+                                    <strong class="order-due-amount">¥{{price (sub (sub .Order.TotalCents .Order.DiscountCents) .Order.PaidCents)}}</strong>
+                                </div>
+                            </div>
+                        </section>
+
+                        {{if and .Feature.TradeEnabled (or .Feature.VoucherEnabled .IsAdmin)}}
+                        <section class="business-card order-ticket-card">
+                            <div class="order-section-title">订单票据</div>
+                            <a class="cart-ticket-export-btn" href="/track/ticket/export?hash={{.Order.Hash}}&phone={{.Order.Phone}}" target="_blank">导出订单票据单</a>
+                        </section>
+                        {{end}}
+                    </div>
+
+                    <div class="order-items-panel">
+                        <section class="business-card order-status-card">
+                            <div class="order-section-title">订单状态</div>
+                            <div class="order-status-seg">
+                                <span class="order-status-seg-btn {{if eq .Order.Status "待确认"}}active{{end}}">待确认</span>
+                                <span class="order-status-seg-btn {{if eq .Order.Status "已确认"}}active{{end}}">已确认</span>
+                                <span class="order-status-seg-btn {{if eq .Order.Status "待配送"}}active{{end}}">待配送</span>
+                                <span class="order-status-seg-btn {{if eq .Order.Status "已配送"}}active{{end}}">已配送</span>
+                                <span class="order-status-seg-btn {{if eq .Order.Status "待付款"}}active{{end}}">待付款</span>
+                                <span class="order-status-seg-btn {{if eq .Order.Status "已付款"}}active{{end}}">已付款</span>
+                            </div>
+                        </section>
+                        {{$order := .Order}}
+                        <div x-data="{tab: 'items'}">
+                            <div class="order-tab-bar">
+                                <button type="button" class="order-tab-btn" :class="{'active':tab==='items'}" @click="tab='items'">商品列表</button>
+                                <button type="button" class="order-tab-btn" :class="{'active':tab==='voucher'}" @click="tab='voucher'">下单凭证</button>
+                                <button type="button" class="order-tab-btn" :class="{'active':tab==='delivery'}" @click="tab='delivery'">送货凭证</button>
+                                <button type="button" class="order-tab-btn" :class="{'active':tab==='return'}" @click="tab='return'">退货凭证</button>
+                                <button type="button" class="order-tab-btn" :class="{'active':tab==='statement'}" @click="tab='statement'">结账记录</button>
+                            </div>
+                            <div x-show="tab==='items'">
+                                <div class="cart-list business-card order-items-table-card">
+                                    <div class="cart-head track-cart-head"><span>商品</span><span>数量</span><span>小计</span><span>状态</span></div>
+                                    {{range .Order.Items}}
+                                    <div class="cart-row order-item-row order-detail-row track-cart-row {{if .IsReturn}}order-item-deleted{{end}}">
+                                        {{if .Image}}<img src="{{.Image}}" class="cart-row-image" alt="{{.ProductName}}">{{else}}<div class="cart-row-image order-row-image-empty"><i class="sui-Bag"></i></div>{{end}}
+                                        <div class="order-info-cell">
+                                            <div class="cart-row-body">
+                                                <div class="cart-row-title">{{.ProductName}}</div>
+                                                <div class="cart-row-meta">{{.Brand}} · ¥{{price .PriceCents}} / {{.Unit}}</div>
+                                            </div>
+                                        </div>
+                                        <div class="cart-qty-form track-qty-display">{{.Qty}}{{.Unit}}</div>
+                                        <div class="cart-row-price order-line-total">{{if .IsReturn}}-{{end}}¥{{price .LineCents}}</div>
+                                        <div class="order-actions-cell cart-row-action track-actions-cell">
+                                            <button type="button" class="order-confirm-btn {{if .Delivered}}is-active{{end}}" disabled aria-label="确认商品" aria-pressed="{{if .Delivered}}true{{else}}false{{end}}">✓</button>
+                                            <button type="button" class="order-return-btn {{if .IsReturn}}is-return{{end}}" disabled aria-label="{{if .IsReturn}}退货{{else}}售出{{end}}">{{if .IsReturn}}<svg class="order-return-svg" viewBox="0 0 1024 1024" aria-hidden="true"><path d="M283.64 706.2a17 17 0 0 0-3.61 9.88q0 7.7 6.74 12.29a48.65 48.65 0 0 0 11.09 6q6.74 0 17.83-5.78a163.08 163.08 0 0 0 25.06-16.87A134 134 0 0 0 376.89 666q45.29 65.54 167.22 65.54h181.67q17.83 0 17.83-18.31t-17.83-18.31H534.47q-60.72 0-98.31-21.45t-45.3-58.55V464.53a141.39 141.39 0 0 0-1.2-20.73q-1.21-7.7-4.58-12.05a15.42 15.42 0 0 0-9.64-5.54 90.5 90.5 0 0 0-16.39-1.2h-61.2q-10.12 0-13.73 5.3t-3.62 15.42q0 16.39 17.35 16.38h52c2.89 0 4.34 2.1 4.34 6.27V619.7q0 44.81-57.83 76.62h0.48q-9.6 4.81-13.2 9.88zM355.68 311.28q-9.65-7.7-16.39-12.53-12.54-9.64-20.72-9.64-9.65 0-13 6.5a76 76 0 0 0-5.3 12.77c0 2.89 1.12 6 3.37 9.16a30.49 30.49 0 0 0 10.12 8.67 101.31 101.31 0 0 1 12.24 8.2q7 5.31 16.63 13.49 9.63 7.23 17.34 14.22t14 13.25q13.48 13.49 21.2 13.49 7.23 0 13.25-6.27t6-13.49q0-6.74-5.78-13.49-4.83-5.3-31.33-26.51h0.48q-11.01-8.92-22.11-17.82z"></path><path d="M696.63 496.09q8.91-9.4 8.91-32.53V340.19q0-22.65-8.67-31.57T666 299.71H473.75q-22.17 0-30.36 8.44t-8.19 32v293.53q0 19.28 5.3 28.43 7.23 12 21.68 12 12 0 44.34-10.6 14.23-4.89 28.43-9.88 13-4.58 23.62-9.4a160.46 160.46 0 0 0 18.07-9.39 83.77 83.77 0 0 0 10.12-7.23q3.62-3.13 4.58-5.54a14.2 14.2 0 0 0 1-5.3q0-4.33-3.85-10.6h0.48q-3.38-6.25-12-6.5t-25.06 7.95a134.16 134.16 0 0 1-19 8.44Q519.63 621 506.52 626q-11.07 3.56-22.17 7c-6.75 2.1-10.77 3.13-12 3.13q-1 0-1-6.26V505.49h27.47q39 34.7 72.29 65.06T630.37 625q14 13.07 27.71 26.51T685.79 678h-0.48q6.25 6.26 12.77 6.27t12.77-5.3q6.75-5.78 6.75-13.49a19.16 19.16 0 0 0-2.17-8 32.42 32.42 0 0 0-6.51-8.91q-2.42-2.41-14.94-13.73t-34.21-31.04q-3.56-3.06-7-6.27-3.8-3.55-7.46-7.23 13.48-8.2 24.33-15.9t19.51-14.94q24.58-20.72 24.58-33.25 0-2.4-2.41-7.23a19.13 19.13 0 0 0-7-7.71q-4.59-2.89-11.33-1.68t-15.42 9.88A323 323 0 0 1 649.89 544a335 335 0 0 1-30.6 21.69q-16.21-14.69-32.77-29.12-16.39-14.21-35.18-31.08H666q21.71 0 30.63-9.4z m-225.29-152a14.84 14.84 0 0 1 1-6.27c0.64-1.28 2.25-1.93 4.82-1.93h186q6.74 0 6.74 8.2v41H471.34z m0 125.29v-49.19h198.54v40q0 9.16-6.74 9.16z"></path><path d="M924.42 337.44a447.89 447.89 0 1 0-807.2 386.21 28.72 28.72 0 0 0 50.57-27.21 391 391 0 0 1-46.36-184.68c0-215.25 175.12-390.38 390.38-390.38S902.19 296.5 902.19 511.75 727.07 902.13 511.82 902.13a388.12 388.12 0 0 1-221.29-68.73 28.72 28.72 0 0 0-32.6 47.28 448 448 0 0 0 666.49-543.24z"></path></svg>{{else}}<i class="sui-Bag"></i>{{end}}</button>
+                                        </div>
+                                    </div>
+                                    {{else}}
+                                    <div class="order-empty-items empty-state"><p class="empty-state-title">暂无商品</p></div>
+                                    {{end}}
+                                </div>
+                            </div>
+                            <div x-show="tab==='voucher'" x-cloak>
+                                <div class="shop-product-grid admin-product-grid">
+                                    {{$order := .Order}}
+                                    {{range $order.Vouchers}}{{if eq .Type "voucher"}}
+                                    <div class="product-card admin-product-card group">
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="product-info text-sm">
+                                            <div class="media-card-hash">{{.Description}}</div>
+                                            <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
+                                        </div>
+                                    </div>
+                                    {{end}}{{end}}
+                                </div>
+                            </div>
+                            <div x-show="tab==='delivery'" x-cloak>
+                                <div class="shop-product-grid admin-product-grid">
+                                    {{$order := .Order}}
+                                    {{range $order.Vouchers}}{{if eq .Type "delivery"}}
+                                    <div class="product-card admin-product-card group">
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="product-info text-sm">
+                                            <div class="media-card-hash">{{.Description}}</div>
+                                            <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
+                                        </div>
+                                    </div>
+                                    {{end}}{{end}}
+                                </div>
+                            </div>
+                            <div x-show="tab==='return'" x-cloak>
+                                <div class="shop-product-grid admin-product-grid">
+                                    {{$order := .Order}}
+                                    {{range $order.Vouchers}}{{if eq .Type "return"}}
+                                    <div class="product-card admin-product-card group">
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="product-info text-sm">
+                                            <div class="media-card-hash">{{.Description}}</div>
+                                            <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
+                                        </div>
+                                    </div>
+                                    {{end}}{{end}}
+                                </div>
+                            </div>
+                            <div x-show="tab==='statement'" x-cloak>
+                                <div class="shop-product-grid admin-product-grid">
+                                    {{$order := .Order}}
+                                    {{range $order.Vouchers}}{{if eq .Type "statement"}}
+                                    <div class="product-card admin-product-card group">
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="product-info text-sm">
+                                            <div class="media-card-hash">{{.Description}}</div>
+                                            <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span>{{if .IsRefund}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">-¥{{formatPrice .AmountCents}}</span>{{else}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">¥{{formatPrice .AmountCents}}</span>{{end}}</span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
+                                        </div>
+                                    </div>
+                                    {{end}}{{end}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {{end}}
+{{end}}

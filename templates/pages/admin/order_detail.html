@@ -1,0 +1,198 @@
+{{define "content_admin_order-detail"}}
+                <div class="admin-shell">
+                    <div class="page-header order-detail-page-header">
+                        <div>
+                            <h2 class="page-header-title">订单详情</h2>
+                        </div>
+                    </div>
+                    <form method="post" action="/admin/order/update/{{.Order.Hash}}" class="order-detail-form order-bill-layout">
+                        <input type="hidden" name="total" value="{{price .Order.TotalCents}}">
+                        <input type="hidden" name="add_product_id" id="order-add-product-id" value="0">
+                        <input type="hidden" name="add_qty" id="order-add-qty" value="">
+                        <input type="hidden" name="add_price" id="order-add-price" value="">
+                        {{if .Order.Archived}}<input type="hidden" name="archived" value="1">{{end}}
+
+                        <div class="order-detail-cart-layout">
+                            <div class="order-detail-side">
+                                <section class="business-card order-customer-card">
+                                    <div class="order-section-title">客户信息</div>
+                                    <div class="order-customer-fields">
+                                        <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">联系人</label><input name="contact_name" value="{{.Order.ContactName}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="联系人姓名"></div><div><label class="text-sm text-gray-600 dark:text-gray-400">联系电话</label><input name="phone" value="{{.Order.Phone}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="手机号"></div></div>
+                                        <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">小区名称</label><input name="community" value="{{.Order.Community}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="小区名称"></div><div><label class="text-sm text-gray-600 dark:text-gray-400">楼栋号</label><input name="building" value="{{.Order.Building}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="楼栋号"></div></div>
+                                        <div class="order-customer-row"><div><label class="text-sm text-gray-600 dark:text-gray-400">单元号</label><input name="unit_no" value="{{.Order.UnitNo}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="单元号"></div><div><label class="text-sm text-gray-600 dark:text-gray-400">房号</label><input name="room" value="{{.Order.Room}}" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="房号"></div></div>
+                                        <div class="order-notes-field">
+                                        <label class="text-sm text-gray-600 dark:text-gray-400">备注说明</label>
+                                        <textarea name="notes" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" rows="2" placeholder="订单备注（如配送时间、门牌提示等）">{{.Order.Notes}}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="order-detail-submit" style="margin-top:12px">
+                                        <button type="button" class="btn btn-primary" onclick="saveCustomerInfo()">确认客户信息</button>
+                                    </div>
+                                </section>
+
+                                <section class="business-card order-summary-card">
+                                    <div class="order-section-title">订单金额</div>
+                                    <div class="order-info-stack">
+                                        <div class="order-info-field">
+                                            <label class="text-sm text-gray-600 dark:text-gray-400">抹零/优惠金额</label>
+                                            <input name="discount" class="form-control order-discount-input bg-gray-50 rounded dark:bg-gray-700 dark:text-white" value="{{price .Order.DiscountCents}}" oninput="recalcOrderDetail()">
+                                        </div>
+                                        <div class="order-info-field">
+                                            <label class="text-sm text-gray-600 dark:text-gray-400">已付金额</label>
+                                            <input name="paid" class="form-control order-discount-input bg-gray-50 rounded dark:bg-gray-700 dark:text-white" value="{{price .Order.PaidCents}}" oninput="recalcOrderDetail()">
+                                        </div>
+                                    </div>
+                                    <div class="order-total-box">
+                                        <div class="order-total-row">
+                                            <span class="order-total-label">订单合计</span>
+                                            <div class="order-total-amounts">
+                                                <span id="order-original-total" class="order-original-total {{if eq .Order.DiscountCents 0}}hidden{{end}}">¥{{price (add .Order.TotalCents .Order.DiscountCents)}}</span>
+                                                <strong id="order-live-total">¥{{price .Order.TotalCents}}</strong>
+                                            </div>
+                                        </div>
+                                        <div id="order-table-total" class="hidden">¥{{price .Order.TotalCents}}</div>
+                                    </div>
+                                    <div class="order-total-box order-total-paid">
+                                        <div class="order-total-row">
+                                            <span class="order-total-label">已付金额</span>
+                                            <strong id="order-paid-total" class="order-paid-amount">¥{{price .Order.PaidCents}}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="order-total-box order-total-due">
+                                        <div class="order-total-row">
+                                            <span class="order-total-label">应付金额</span>
+                                            <strong id="order-due-total" class="order-due-amount">¥{{price (sub (sub .Order.TotalCents .Order.DiscountCents) .Order.PaidCents)}}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="order-detail-submit">
+                                        <button type="submit" class="btn btn-primary">确认订单金额</button>
+                                    </div>
+                                </section>
+
+                                {{if .Feature.TradeEnabled}}
+                                <section class="business-card order-ticket-card">
+                                    <div class="order-section-title">订单票据</div>
+                                    <a class="cart-ticket-export-btn" href="/admin/order/ticket/export/{{.Order.Hash}}" target="_blank">导出订单票据单</a>
+                                </section>
+                                {{end}}
+                            </div>
+
+                            <div class="order-items-panel">
+                                <section class="business-card order-status-card">
+                                    <div class="order-section-title">订单状态</div>
+                                    <div class="order-status-seg" x-data="{status:'{{.Order.Status}}'}">
+                                        <input type="hidden" name="status" x-model="status">
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='待确认'}" @click="status='待确认'; window.updateOrderStatus(status)">待确认</button>
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='已确认'}" @click="status='已确认'; window.updateOrderStatus(status)">已确认</button>
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='待配送'}" @click="status='待配送'; window.updateOrderStatus(status)">待配送</button>
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='已配送'}" @click="status='已配送'; window.updateOrderStatus(status)">已配送</button>
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='待付款'}" @click="status='待付款'; window.updateOrderStatus(status)">待付款</button>
+                                        <button type="button" class="order-status-seg-btn" :class="{'active':status==='已付款'}" @click="status='已付款'; window.updateOrderStatus(status)">已付款</button>
+                                            <button type="button" class="order-status-seg-btn" :class="{'active':status==='已取消'}" @click="status='已取消'; window.updateOrderStatus(status)">已取消</button>
+                                            <button type="button" class="order-status-seg-btn" :class="{'active':status==='已归档'}" @click="status='已归档'; window.updateOrderStatus(status)">已归档</button>
+                                        </div>
+                                    </section>
+                                </section>
+                                <script>window.orderTab = new URLSearchParams(window.location.search).get('tab') || 'items';</script>
+                                <div x-data="{tab: window.orderTab || 'items'}">
+                                    <div class="order-tab-bar">
+                                        <button type="button" class="order-tab-btn" :class="{'active':tab==='items'}" @click="tab='items'">商品列表</button>
+                                        <button type="button" class="order-tab-btn" :class="{'active':tab==='voucher'}" @click="tab='voucher'">下单凭证</button>
+                                        <button type="button" class="order-tab-btn" :class="{'active':tab==='delivery'}" @click="tab='delivery'">送货凭证</button>
+                                        <button type="button" class="order-tab-btn" :class="{'active':tab==='return'}" @click="tab='return'">退货凭证</button>
+                                        <button type="button" class="order-tab-btn" :class="{'active':tab==='statement'}" @click="tab='statement'">结账记录</button>
+                                    </div>
+                                    <div x-show="tab==='items'">
+                                        <div class="cart-list business-card order-items-table-card" id="order-items-list">
+                                    <div class="cart-head"><span>商品</span><span>数量</span><span>小计</span><span>操作</span></div>
+                                    {{range .Order.Items}}
+                                    <div class="cart-row order-item-row order-detail-row">
+                                        <input type="hidden" name="item_id" value="{{.ID}}"><input type="hidden" name="item_product_id" value="{{.ProductID}}"><input type="hidden" name="item_sort" value="0"><input type="hidden" name="delivered_item" value="{{if .Delivered}}{{.ID}}{{end}}"><input type="hidden" name="return_item" value="{{if .IsReturn}}{{.ID}}{{end}}">
+                                        {{if .Image}}<img src="{{.Image}}" class="cart-row-image" alt="{{.ProductName}}">{{else}}<div class="cart-row-image order-row-image-empty"><i class="sui-Image"></i></div>{{end}}
+                                        <div class="order-info-cell">
+                                        <div class="cart-row-body">
+                                            <div class="cart-row-title">{{.ProductName}}</div>
+                                            <input type="hidden" name="item_name" value="{{.ProductName}}">
+                                            <input type="hidden" name="item_brand" value="{{.Brand}}">
+                                            <div class="cart-row-meta">{{.Brand}}</div>
+                                        </div>
+                                        <span class="order-price-unit-edit"><input name="item_price" class="order-item-input order-item-price" value="{{price .PriceCents}}" oninput="recalcOrderDetail()"><input name="item_unit" class="order-item-input order-item-unit" value="{{.Unit}}"></span>
+                                        </div>
+                                        <div class="cart-qty-form"><input name="item_qty" class="order-item-input order-item-qty" value="{{.Qty}}" oninput="recalcOrderDetail()"></div>
+                                        <div class="cart-row-price order-line-total">¥{{price .LineCents}}</div>
+                                        <div class="order-actions-cell cart-row-action"><button type="button" class="order-confirm-btn {{if .Delivered}}is-active{{end}}" onclick="toggleOrderItemConfirm(this, {{.ID}})" aria-label="确认商品" aria-pressed="{{if .Delivered}}true{{else}}false{{end}}">✓</button><button type="button" class="order-return-btn {{if .IsReturn}}is-return{{end}}" onclick="toggleOrderReturn(this, {{.ID}})" aria-label="{{if .IsReturn}}退货{{else}}售出{{end}}">{{if .IsReturn}}<svg class="order-return-svg" viewBox="0 0 1024 1024" aria-hidden="true"><path d="M283.64 706.2a17 17 0 0 0-3.61 9.88q0 7.7 6.74 12.29a48.65 48.65 0 0 0 11.09 6q6.74 0 17.83-5.78a163.08 163.08 0 0 0 25.06-16.87A134 134 0 0 0 376.89 666q45.29 65.54 167.22 65.54h181.67q17.83 0 17.83-18.31t-17.83-18.31H534.47q-60.72 0-98.31-21.45t-45.3-58.55V464.53a141.39 141.39 0 0 0-1.2-20.73q-1.21-7.7-4.58-12.05a15.42 15.42 0 0 0-9.64-5.54 90.5 90.5 0 0 0-16.39-1.2h-61.2q-10.12 0-13.73 5.3t-3.62 15.42q0 16.39 17.35 16.38h52c2.89 0 4.34 2.1 4.34 6.27V619.7q0 44.81-57.83 76.62h0.48q-9.6 4.81-13.2 9.88zM355.68 311.28q-9.65-7.7-16.39-12.53-12.54-9.64-20.72-9.64-9.65 0-13 6.5a76 76 0 0 0-5.3 12.77c0 2.89 1.12 6 3.37 9.16a30.49 30.49 0 0 0 10.12 8.67 101.31 101.31 0 0 1 12.24 8.2q7 5.31 16.63 13.49 9.63 7.23 17.34 14.22t14 13.25q13.48 13.49 21.2 13.49 7.23 0 13.25-6.27t6-13.49q0-6.74-5.78-13.49-4.83-5.3-31.33-26.51h0.48q-11.01-8.92-22.11-17.82z"></path><path d="M696.63 496.09q8.91-9.4 8.91-32.53V340.19q0-22.65-8.67-31.57T666 299.71H473.75q-22.17 0-30.36 8.44t-8.19 32v293.53q0 19.28 5.3 28.43 7.23 12 21.68 12 12 0 44.34-10.6 14.23-4.89 28.43-9.88 13-4.58 23.62-9.4a160.46 160.46 0 0 0 18.07-9.39 83.77 83.77 0 0 0 10.12-7.23q3.62-3.13 4.58-5.54a14.2 14.2 0 0 0 1-5.3q0-4.33-3.85-10.6h0.48q-3.38-6.25-12-6.5t-25.06 7.95a134.16 134.16 0 0 1-19 8.44Q519.63 621 506.52 626q-11.07 3.56-22.17 7c-6.75 2.1-10.77 3.13-12 3.13q-1 0-1-6.26V505.49h27.47q39 34.7 72.29 65.06T630.37 625q14 13.07 27.71 26.51T685.79 678h-0.48q6.25 6.26 12.77 6.27t12.77-5.3q6.75-5.78 6.75-13.49a19.16 19.16 0 0 0-2.17-8 32.42 32.42 0 0 0-6.51-8.91q-2.42-2.41-14.94-13.73t-34.21-31.04q-3.56-3.06-7-6.27-3.8-3.55-7.46-7.23 13.48-8.2 24.33-15.9t19.51-14.94q24.58-20.72 24.58-33.25 0-2.4-2.41-7.23a19.13 19.13 0 0 0-7-7.71q-4.59-2.89-11.33-1.68t-15.42 9.88A323 323 0 0 1 649.89 544a335 335 0 0 1-30.6 21.69q-16.21-14.69-32.77-29.12-16.39-14.21-35.18-31.08H666q21.71 0 30.63-9.4z m-225.29-152a14.84 14.84 0 0 1 1-6.27c0.64-1.28 2.25-1.93 4.82-1.93h186q6.74 0 6.74 8.2v41H471.34z m0 125.29v-49.19h198.54v40q0 9.16-6.74 9.16z"></path><path d="M924.42 337.44a447.89 447.89 0 1 0-807.2 386.21 28.72 28.72 0 0 0 50.57-27.21 391 391 0 0 1-46.36-184.68c0-215.25 175.12-390.38 390.38-390.38S902.19 296.5 902.19 511.75 727.07 902.13 511.82 902.13a388.12 388.12 0 0 1-221.29-68.73 28.72 28.72 0 0 0-32.6 47.28 448 448 0 0 0 666.49-543.24z"></path></svg>{{else}}<i class="sui-Bag"></i>{{end}}</button><button type="button" class="order-delete-btn" onclick="toggleOrderItemDelete(this, {{.ID}})" aria-label="删除商品" aria-pressed="false"><i class="sui-Trashcancontrol"></i></button><input type="hidden" name="delete_item" value=""></div>
+                                    </div>
+                                    {{else}}
+                                    <div class="order-empty-items empty-state" id="order-items-empty"><p class="empty-state-title">暂无商品</p><p class="empty-state-desc">当前订单没有商品。</p></div>
+                                    {{end}}
+                                </div>
+                                <div class="order-add-actions">
+                                    <button type="button" class="order-add-tile" onclick="openOrderExtraProductModal()"><span>添加额外商品</span></button>
+                                    <button type="button" class="order-add-tile" onclick="addOrderCustomItem()"><span>添加自定义商品</span></button>
+                                    <button type="button" class="btn btn-primary" onclick="submitOrderItems()">确认订单商品列表</button>
+                                </div>
+                                </div>
+                                {{$order := .Order}}
+                                <div x-show="tab==='voucher'" x-cloak>
+                                    <div class="admin-product-grid" id="voucher-voucher-grid">
+                                        {{range $order.Vouchers}}{{if eq .Type "voucher"}}
+                                        <div class="product-card admin-product-card group">
+                                            <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                            <div class="product-info text-sm">
+                                                <div class="media-card-hash">{{.Description}}</div>
+                                                <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button><form method="post" action="/admin/order/voucher/delete" class="admin-product-delete-form" style="margin-left:0"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="order_hash" value="{{$order.Hash}}"><button type="button" class="media-action-btn" onclick="window.confirmAction('确认删除','确定要删除此凭证吗？','danger').then(function(ok){if(ok) this.closest('form').submit();}.bind(this))"><i class="sui-Trashcancontrol"></i></button></form></span></div>
+                                            </div>
+                                        </div>
+                                        {{end}}{{end}}
+                                        <button type="button" class="product-card product-add-card" onclick="openVoucherModal('voucher')"><span class="cat-create-tile-icon">+</span><span>添加下单凭证</span></button>
+                                    </div>
+                                </div>
+                                <div x-show="tab==='delivery'" x-cloak>
+                                    <div class="admin-product-grid" id="voucher-delivery-grid">
+                                        {{range $order.Vouchers}}{{if eq .Type "delivery"}}
+                                        <div class="product-card admin-product-card group">
+                                            <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                            <div class="product-info text-sm">
+                                                <div class="media-card-hash">{{.Description}}</div>
+                                                <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button><form method="post" action="/admin/order/voucher/delete" class="admin-product-delete-form" style="margin-left:0"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="order_hash" value="{{$order.Hash}}"><button type="button" class="media-action-btn" onclick="window.confirmAction('确认删除','确定要删除此凭证吗？','danger').then(function(ok){if(ok) this.closest('form').submit();}.bind(this))"><i class="sui-Trashcancontrol"></i></button></form></span></div>
+                                            </div>
+                                        </div>
+                                        {{end}}{{end}}
+                                        <button type="button" class="product-card product-add-card" onclick="openVoucherModal('delivery')"><span class="cat-create-tile-icon">+</span><span>添加送货凭证</span></button>
+                                    </div>
+                                </div>
+                                <div x-show="tab==='return'" x-cloak>
+                                    <div class="admin-product-grid" id="voucher-return-grid">
+                                        {{range $order.Vouchers}}{{if eq .Type "return"}}
+                                        <div class="product-card admin-product-card group">
+                                            <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                            <div class="product-info text-sm">
+                                                <div class="media-card-hash">{{.Description}}</div>
+                                                <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button><form method="post" action="/admin/order/voucher/delete" class="admin-product-delete-form" style="margin-left:0"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="order_hash" value="{{$order.Hash}}"><button type="button" class="media-action-btn" onclick="window.confirmAction('确认删除','确定要删除此凭证吗？','danger').then(function(ok){if(ok) this.closest('form').submit();}.bind(this))"><i class="sui-Trashcancontrol"></i></button></form></span></div>
+                                            </div>
+                                        </div>
+                                        {{end}}{{end}}
+                                        <button type="button" class="product-card product-add-card" onclick="openVoucherModal('return')"><span class="cat-create-tile-icon">+</span><span>添加退货凭证</span></button>
+                                    </div>
+                                </div>
+                                <div x-show="tab==='statement'" x-cloak>
+                                    <div class="admin-product-grid" id="voucher-statement-grid">
+                                        {{range $order.Vouchers}}{{if eq .Type "statement"}}
+                                        <div class="product-card admin-product-card group">
+                                            <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                            <div class="product-info text-sm">
+                                                <div class="media-card-hash">{{.Description}}</div>
+                                                <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span>{{if .IsRefund}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">-¥{{formatPrice .AmountCents}}</span>{{else}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">¥{{formatPrice .AmountCents}}</span>{{end}}</span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button><form method="post" action="/admin/order/voucher/delete" class="admin-product-delete-form" style="margin-left:0"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="order_hash" value="{{$order.Hash}}"><button type="button" class="media-action-btn" onclick="window.confirmAction('确认删除','确定要删除此凭证吗？','danger').then(function(ok){if(ok) this.closest('form').submit();}.bind(this))"><i class="sui-Trashcancontrol"></i></button></form></span></div>
+                                            </div>
+                                        </div>
+                                        {{end}}{{end}}
+                                        <button type="button" class="product-card product-add-card" onclick="openVoucherModal('statement')"><span class="cat-create-tile-icon">+</span><span>添加结账记录</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
+                    </form>
+                </div>
+{{end}}

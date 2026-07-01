@@ -1,0 +1,54 @@
+{{define "content_home"}}
+                <div class="page-header"><div><h2 class="page-header-title">{{if .PlatformSubtitle}}{{.PlatformSubtitle}}{{else}}{{.PlatformName}}{{end}}</h2></div></div>
+                {{$hs := .HomeSettings}}
+                {{$hasHero := or $hs.HeroLeftImg $hs.HeroRightImg}}
+                {{$hasCarousel1 := and $hs.Carousel1 (gt (len $hs.Carousel1) 0)}}
+                {{$hasCarousel2 := and $hs.Carousel2 (gt (len $hs.Carousel2) 0)}}
+                {{$hasAnyCarousel := or $hasCarousel1 $hasCarousel2}}
+                {{$hasRecommend := and .Products (gt (len .Products) 0)}}
+                {{if $hasHero}}
+                <div class="home-showcase">
+                    <div class="home-showcase-row home-showcase-row-a">
+                        {{if $hs.HeroLeftImg}}
+                        <div class="home-tile home-tile-large" style="background-image:url({{$hs.HeroLeftImg}})">{{if $hs.HeroLeftLink}}<a href="{{$hs.HeroLeftLink}}" class="home-tile-link"></a>{{end}}{{if $hs.HeroLeftText}}<span>{{$hs.HeroLeftText}}</span>{{end}}</div>
+                        {{else}}<div class="home-tile home-tile-large home-tile-empty"></div>{{end}}
+                        {{if $hs.HeroRightImg}}
+                        <div class="home-tile" style="background-image:url({{$hs.HeroRightImg}})">{{if $hs.HeroRightLink}}<a href="{{$hs.HeroRightLink}}" class="home-tile-link"></a>{{end}}{{if $hs.HeroRightText}}<span>{{$hs.HeroRightText}}</span>{{end}}</div>
+                        {{else}}<div class="home-tile home-tile-empty"></div>{{end}}
+                    </div>
+                </div>
+                {{end}}
+                {{if $hasAnyCarousel}}
+                <script>window.homeCarousel1={{json $hs.Carousel1}};window.homeCarousel2={{json $hs.Carousel2}};</script>
+                <div class="home-showcase">
+                    <div class="home-showcase-row home-showcase-row-b">
+                        {{if $hasCarousel1}}
+                        <div class="home-tile home-carousel" x-data="{i:0, slides: window.homeCarousel1}" :style="'background-image:url(' + slides[i].img + ')'">
+                            <button class="gallery-nav gallery-nav-prev" @click="i=i===0?slides.length-1:i-1" aria-label="上一张"><i class="sui-forward-right"></i></button>
+                            <button class="gallery-nav gallery-nav-next" @click="i=i===slides.length-1?0:i+1" aria-label="下一张"><i class="sui-forward-right"></i></button>
+                            <div class="home-dots"><template x-for="(s, idx) in slides"><button :class="{'active':i===idx}" @click="i=idx" :aria-label="'切换至第'+(idx+1)+'张'"></button></template></div>
+                            <template x-if="slides[i] && slides[i].link"><a :href="slides[i].link" class="home-tile-link"></a></template>
+                            <template x-if="slides[i] && slides[i].text"><span x-text="slides[i].text"></span></template>
+                        </div>
+                        {{else}}<div class="home-tile home-tile-empty"></div>{{end}}
+                        {{if $hasCarousel2}}
+                        <div class="home-tile home-tile-large home-carousel" x-data="{i:0, slides: window.homeCarousel2}" :style="'background-image:url(' + slides[i].img + ')'">
+                            <button class="gallery-nav gallery-nav-prev" @click="i=i===0?slides.length-1:i-1" aria-label="上一张"><i class="sui-forward-right"></i></button>
+                            <button class="gallery-nav gallery-nav-next" @click="i=i===slides.length-1?0:i+1" aria-label="下一张"><i class="sui-forward-right"></i></button>
+                            <div class="home-dots"><template x-for="(s, idx) in slides"><button :class="{'active':i===idx}" @click="i=idx" :aria-label="'切换至第'+(idx+1)+'张'"></button></template></div>
+                            <template x-if="slides[i] && slides[i].link"><a :href="slides[i].link" class="home-tile-link"></a></template>
+                            <template x-if="slides[i] && slides[i].text"><span x-text="slides[i].text"></span></template>
+                        </div>
+                        {{else}}<div class="home-tile home-tile-large home-tile-empty"></div>{{end}}
+                    </div>
+                </div>
+                {{end}}
+                {{if $hasRecommend}}
+                <div class="page-header"><div><h2 class="page-header-title">推荐商品</h2></div></div>
+                <div class="shop-product-grid pb-8">
+                    {{range .Products}}
+                    <div class="product-card group"><div class="media media-4x3"><a href="/product/{{.Slug}}" class="media-content rounded" style="background-image:url({{index .Images 0}})" title="{{.Name}}"></a></div><div class="product-info text-sm"><a href="/product/{{.Slug}}" class="product-title line-clamp-2">{{.Name}}</a><div class="mt-3 flex items-center justify-between"><div class="flex items-center break-all"><img src="{{.BrandLogo}}" class="object-cover size-5 rounded-full mr-1" alt="{{.Brand}}"><span class="text-xs text-gray-500">{{.Brand}}</span></div><div class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}</span><span class="text-gray-400"> / {{.Unit}}</span></div></div></div></div>
+                    {{end}}
+                </div>
+                {{end}}
+{{end}}

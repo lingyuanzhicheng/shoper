@@ -1,0 +1,23 @@
+{{define "pagination"}}
+{{if gt .Pagination.Total 0}}
+<div class="pagination-bar" data-pagination>
+    <div class="pagination-info">共 {{.Pagination.Total}} 条 &amp; 第 {{.Pagination.Page}} / {{.Pagination.Pages}} 页</div>
+    <div class="pagination-controls">
+        <a class="pagination-btn pagination-icon-btn pagination-first {{if not .Pagination.HasPrev}}disabled{{end}}" href="{{if .Pagination.HasPrev}}{{pageURL .Pagination 1}}{{else}}javascript:;{{end}}" title="跳转开头" aria-label="跳转开头"><svg class="pagination-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></a>
+        <a class="pagination-btn pagination-icon-btn pagination-prev {{if not .Pagination.HasPrev}}disabled{{end}}" href="{{if .Pagination.HasPrev}}{{pageURL .Pagination .Pagination.PrevPage}}{{else}}javascript:;{{end}}" title="上一页" aria-label="上一页"><svg class="pagination-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></a>
+        <span class="pagination-page-input-wrap">
+            <input type="number" min="1" max="{{.Pagination.Pages}}" value="{{.Pagination.Page}}" class="pagination-page-input" aria-label="跳转到页码" data-base="{{pageURL .Pagination 0}}" onkeydown="if(event.key==='Enter'){var v=parseInt(this.value)||1;var max=parseInt(this.getAttribute('max'))||1;if(v<1)v=1;if(v>max)v=max;location.href=this.getAttribute('data-base').replace('page=0','page='+v);}">
+            <span class="pagination-page-input-sep">/</span>
+            <span class="pagination-page-input-total">{{.Pagination.Pages}}</span>
+        </span>
+        <a class="pagination-btn pagination-icon-btn pagination-next {{if not .Pagination.HasNext}}disabled{{end}}" href="{{if .Pagination.HasNext}}{{pageURL .Pagination .Pagination.NextPage}}{{else}}javascript:;{{end}}" title="下一页" aria-label="下一页"><svg class="pagination-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg></a>
+        <a class="pagination-btn pagination-icon-btn pagination-last {{if not .Pagination.HasNext}}disabled{{end}}" href="{{if .Pagination.HasNext}}{{pageURL .Pagination .Pagination.Pages}}{{else}}javascript:;{{end}}" title="跳转末尾" aria-label="跳转末尾"><svg class="pagination-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></a>
+    </div>
+    <span class="pagination-size">
+        <a class="pagination-size-chip {{if eq .Pagination.Size 30}}active{{end}}" href="{{sizeURL .Pagination 30}}">30</a>
+        <a class="pagination-size-chip {{if eq .Pagination.Size 50}}active{{end}}" href="{{sizeURL .Pagination 50}}">50</a>
+        <a class="pagination-size-chip {{if eq .Pagination.Size 100}}active{{end}}" href="{{sizeURL .Pagination 100}}">100</a>
+    </span>
+</div>
+{{end}}
+{{end}}

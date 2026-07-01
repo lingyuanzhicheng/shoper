@@ -1,0 +1,100 @@
+{{define "content_admin_product-edit"}}
+                <div class="admin-shell">
+                    {{$p := .EditProduct}}
+                    <div class="page-header"><div><h2 class="page-header-title">{{if $p.ID}}编辑商品{{else}}新建商品{{end}}</h2><p class="page-header-desc">{{if $p.ID}}{{.EditProduct.Name}}{{else}}填写商品信息{{end}}</p></div><a class="text-sm text-gray-500 hover:text-rose-600 transition-colors inline-flex items-center gap-1" href="/admin/products"><i class="sui-forward-right rotate-180 text-xs"></i>返回列表</a></div>
+                    <div class="business-card p-6">
+                        <form method="post" action="{{if $p.ID}}/admin/product/{{$p.ID}}{{else}}/admin/product/new{{end}}" enctype="multipart/form-data" x-data="{images: [{{range $i, $img := $p.Images}}{{if $i}},{{end}}'{{$img}}'{{end}}], uploading: false, availableTags: [{{range $i, $t := $p.Tags}}{{if $i}},{{end}}{id:{{$t.ID}}, name:'{{$t.Name}}'}{{end}}], selectedTags: [{{range $i, $t := $p.Tags}}{{if $i}},{{end}}{{$t.ID}}{{end}}]}" x-effect="document.getElementById('selected-tags-json').value = JSON.stringify(selectedTags)">
+                            <div class="form-section">
+                                <h3><i class="sui-Information form-section-icon"></i>基本信息</h3>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>商品标识 (slug) <span class="text-rose-600">*</span></label>
+                                        <input name="slug" value="{{$p.Slug}}" required placeholder="如 oak-flooring">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>商品名称 <span class="text-rose-600">*</span></label>
+                                        <input name="name" value="{{$p.Name}}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>品牌</label>
+                                        <input name="brand" value="{{$p.Brand}}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>品牌 Logo URL</label>
+                                        <input name="brand_logo" value="{{$p.BrandLogo}}" placeholder="https://...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>单位</label>
+                                        <input name="unit" value="{{$p.Unit}}" placeholder="个/m/平方">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>价格 (元)</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">¥</span>
+                                            <input name="price" value="{{if $p.PriceCents}}{{price $p.PriceCents}}{{end}}" style="padding-left:28px" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>分类</label>
+                                        <select name="category_id" x-ref="catSelect" @change="loadTags($event.target.value)" x-init="$nextTick(function(){ if($el.value && $el.value !== '0') loadTags($el.value); })">
+                                            <option value="0">无</option>
+                                            {{range .AllCategories}}<option value="{{.ID}}" {{if eq $.EditProduct.Group .Name}}selected{{end}}>{{.Name}}</option>{{end}}
+                                        </select>
+                                    </div>
+                                    <div class="form-group form-group-full">
+                                        <label>标签</label>
+                                        <input type="hidden" id="selected-tags-json" name="selected_tags_json" :value="JSON.stringify(selectedTags)">
+                                        <div class="flex flex-wrap gap-2 mt-1" id="tag-selector">
+                                            <template x-for="tag in availableTags" :key="tag.id">
+                                                <label class="tag-checkbox-pill" :class="{'tag-checkbox-active': selectedTags.includes(tag.id)}" @click.prevent="var idx = selectedTags.indexOf(tag.id); if(idx >= 0) selectedTags.splice(idx, 1); else selectedTags.push(tag.id);">
+                                                    <span x-text="tag.name"></span>
+                                                </label>
+                                            </template>
+                                            <span x-show="availableTags.length === 0" class="text-sm text-gray-400">请先选择分类</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3><i class="sui-Filetext form-section-icon"></i>商品描述</h3>
+                                <div class="form-group">
+                                    <label>简介（纯文本）</label>
+                                    <textarea name="description" rows="3">{{$p.Description}}</textarea>
+                                </div>
+                                <div class="form-group" style="margin-top:12px">
+                                    <label>详情（Markdown）</label>
+                                    <textarea name="body" id="product-body" rows="15">{{$p.Body}}</textarea>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <h3><i class="sui-Image form-section-icon"></i>商品图片</h3>
+                                <div class="flex flex-wrap gap-3 mt-2" id="image-list">
+                                    <template x-for="(img, idx) in images" :key="idx">
+                                        <div class="relative w-28 h-28 rounded-lg overflow-hidden border dark:border-gray-700 group">
+                                            <img :src="img" class="w-full h-full object-cover">
+                                            <div class="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-md bg-black/50 text-xs hover:bg-amber-600 transition-colors" @click="var u=images[idx]; images.splice(idx,1); images.unshift(u)" title="设为封面"><svg width="12" height="12" viewBox="0 0 24 24" :fill="idx===0?'#fbbf24':'#fff'"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+                                                <button type="button" class="w-6 h-6 flex items-center justify-center rounded-md bg-black/50 text-white text-xs hover:bg-red-600 transition-colors" @click="images.splice(idx, 1)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="w-28 h-28 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer hover:border-rose-400 relative transition-colors">
+                                        <div x-show="!uploading" class="text-sm text-gray-400">+ 添加</div>
+                                        <div x-show="uploading" class="upload-spinner">
+                                            <span class="spinner"></span>
+                                            <span>上传中</span>
+                                        </div>
+                                        <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" :disabled="uploading" @change="uploading=true; const fd=new FormData(); fd.append('file', $event.target.files[0]); fetch('/upload', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{images.push(d.url); uploading=false}).catch(()=>{uploading=false})">
+                                    </div>
+                                </div>
+                                <input type="hidden" name="img_order" :value="images.join(',')">
+                                <p class="text-xs text-gray-400 mt-2">点击"添加"上传图片，点击星标设为封面，保存后排序生效。</p>
+                            </div>
+                            <div class="flex gap-3 pt-2">
+                                <button class="flex-1 py-2.5 rounded-lg bg-rose-600 text-white font-semibold hover:bg-rose-700 active:bg-rose-800 transition-colors">保存商品</button>
+                                <a href="/admin/products" class="px-6 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium">取消</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+{{end}}

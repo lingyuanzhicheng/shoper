@@ -1,0 +1,28 @@
+{{define "content_admin_settings-about"}}
+                <div class="admin-shell">
+                    <div class="page-header"><div><h2 class="page-header-title">关于本店</h2><p class="page-header-desc">编辑前台"关于本店"页面的标题与内容。</p></div></div>
+                    <form method="post" action="/admin/settings/about">
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Bookmarks form-section-icon"></i>关于本店</h3>
+                                    <p class="settings-card-desc">前台"关于本店"页面的标题与内容</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="settings-field">
+                                <label>页面标题</label>
+                                <input name="about_title" value="{{.AboutTitle}}" placeholder="如 关于 Shoper">
+                            </div>
+                            <div class="settings-field settings-field-full">
+                                <label>页面内容</label>
+                                <textarea name="about_content" id="about-content" rows="12" class="settings-editor" placeholder="支持 Markdown 语法...">{{.AboutContentRaw}}</textarea>
+                            </div>
+                        </div>
+                    </section>
+                    </form>
+                </div>
+{{end}}

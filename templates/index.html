@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html x-data="data" lang="zh-CN" :class="{ 'dark' : $store.info.dark }">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/static/tailwind.css">
+    <link rel="stylesheet" href="/static/iconfont.css">
+    <link rel="stylesheet" href="/static/sinner.css">
+    <link rel="stylesheet" href="/static/schelper.css">
+    <script defer src="/static/alpine.min.js"></script>
+    <script defer src="https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js"></script>
+</head>
+<body class="dark:bg-gray-900 maoboli">
+<div class="flex min-h-screen" id="main">
+
+    <!-- Sidebar -->
+    <aside class="aside flex flex-col h-full fixed left-0 z-40 w-52 overflow-y-auto dark:bg-gray-800 flex-shrink-0 transform -translate-x-full lg:-translate-x-0"
+           :class="{ '-translate-x-full' : $store.switch.isSideMenuOpen }">
+        <div class="flex flex-col w-full py-4 text-gray-500 dark:text-gray-400">
+            <a href="/" class="mx-3 mt-6 mb-2">
+                <span class="demo-logo">Shoper</span>
+            </a>
+            <ul class="mt-6">
+                <li class="relative">
+                    <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 px-6 py-2.5 border-l-4 border-sky-500 text-sky-500 hover:text-sky-400 dark:hover:text-sky-400" href="/">
+                        <span class="inline-flex items-center"><i class="text-xl sui-Structuresquarescontrol w-5"></i><span class="ml-4">网站首页</span></span>
+                    </a>
+                </li>
+                {{range .Categories}}
+                <li class="relative" x-data="{ open: false }">
+                    {{if .Children}}
+                    <button class="inline-flex items-center justify-between w-full text-sm font-semibold transition-colors duration-150 focus:outline-none px-6 py-2.5 border-l-4 border-transparent hover:text-gray-800 dark:hover:text-gray-200"
+                            :class="{'border-sky-500 text-sky-500 hover:text-sky-400 dark:hover:text-sky-400': open, 'hover:text-gray-800 dark:hover:text-gray-200': !open}"
+                            @click="open = !open">
+                        <span class="inline-flex items-center"><i class="text-xl sui-Dots w-5"></i><span class="ml-4">{{.Name}}</span></span>
+                        <i class="text-l sui-forward-down"></i>
+                    </button>
+                    <div class="hidden" :class="{ 'hidden': !open }">
+                        <ul class="p-2 mt-2 space-y-2 overflow-hidden text-sm font-medium rounded-md shadow-inner bg-gray-50 dark:bg-gray-900 dark:text-gray-400" aria-label="submenu">
+                            {{range .Children}}
+                            <li class="ml-8 px-6 py-1 transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200">
+                                <a class="block" href="#">{{.Name}}</a>
+                            </li>
+                            {{end}}
+                        </ul>
+                    </div>
+                    {{else}}
+                    <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 px-6 py-2.5 border-l-4 border-transparent hover:text-gray-800 dark:hover:text-gray-200" href="#">
+                        <span class="inline-flex items-center"><i class="text-xl sui-Taglabele-commerce w-5"></i><span class="ml-4">{{.Name}}</span></span>
+                    </a>
+                    {{end}}
+                </li>
+                {{end}}
+            </ul>
+        </div>
+        <div class="flex mt-auto py-4 text-gray-500 dark:text-gray-400">
+            <ul class="mt-6 w-full">
+                <li class="relative">
+                    <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 px-6 py-2.5 border-l-4 border-transparent" href="#">
+                        <span class="inline-flex items-center"><i class="text-xl sui-send w-5"></i><span class="ml-4">商家入口</span></span>
+                    </a>
+                </li>
+                {{range .Pages}}
+                <li class="relative">
+                    <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 px-6 py-2.5 border-l-4 border-transparent hover:text-gray-800 dark:hover:text-gray-200" href="{{.URL}}">
+                        <span class="inline-flex items-center"><i class="text-xl sui-Bookmarks w-5"></i><span class="ml-4">{{.Name}}</span></span>
+                    </a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+    </aside>
+
+    <!-- Backdrop overlays -->
+    <div class="fixed inset-0 z-50 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center hidden lg:hidden"
+         :class="{ 'hidden' : $store.switch.isSideMenuOpen }"
+         @click="$store.switch.toggleSideMenu()"></div>
+    <div class="fixed inset-0 z-40 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center hidden"
+         :class="{ 'hidden' : $store.switch.isSearch }"
+         @click="$store.switch.toggleSearch();$store.switch.searchtext=''"></div>
+
+    <!-- Main area -->
+    <div class="flex flex-col flex-1 w-full lg:ml-52">
+        <main class="dark:bg-gray-900">
+            <!-- Header -->
+            <header id="main_header" class="z-30 py-4 bg-white border-b sticky top-0 dark:bg-gray-900 dark:border-gray-600">
+                <div class="container flex items-center justify-between h-full px-3 mx-auto text-gray-900 dark:text-gray-300">
+                    <div class="flex justify-left flex-1 lg:mr-32">
+                        <a href="/" class="w-full lg:hidden">
+                            <div class="text-lg font-bold dark:text-gray-100">Sinner</div>
+                        </a>
+                    </div>
+                    <ul class="flex items-center flex-shrink-0 space-x-6">
+                        <li class="flex">
+                            <button class="rounded-md focus:outline-none focus:shadow-outline-purple" @click="$store.switch.toggleSearch()" aria-label="展开搜索">
+                                <i class="text-xl sui-search"></i>
+                            </button>
+                        </li>
+                        <li class="relative" x-data="{open:false}" x-init="main.darkmode(0)">
+                            <button class="align-middle rounded-full focus:shadow-outline-purple focus:outline-none" @click="open=!open" @click.outside="open=false" aria-label="皮肤模式">
+                                <i class="text-xl sui-yue" :class="{'text-sky-500':$store.info.mode!=0}"></i>
+                            </button>
+                            <template x-if="open">
+                                <ul x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute right-0 w-28 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700" aria-label="submenu">
+                                    <li class="flex cursor-pointer items-center px-2 py-1 text-sm hover:bg-slate-50 dark:hover:bg-slate-600/30" :class="{'text-sky-500':$store.info.mode==1}" @click="main.darkmode('dark')">
+                                        <svg class="size-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>深色
+                                    </li>
+                                    <li class="flex cursor-pointer items-center px-2 py-1 text-sm hover:bg-slate-50 dark:hover:bg-slate-600/30" :class="{'text-sky-500':$store.info.mode==2}" @click="main.darkmode('light')">
+                                        <svg class="size-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>浅色
+                                    </li>
+                                    <li class="flex cursor-pointer items-center px-2 py-1 text-sm hover:bg-slate-50 dark:hover:bg-slate-600/30" :class="{'text-sky-500':$store.info.mode==0}" @click="main.darkmode('auto')">
+                                        <svg class="size-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>自动
+                                    </li>
+                                </ul>
+                            </template>
+                        </li>
+                        <li class="relative" @click.outside="closeProfileMenu">
+                            <button class="align-middle rounded-full focus:shadow-outline-purple focus:outline-none" @click="toggleProfileMenu" aria-label="设置">
+                                <i class="sui-shezhi text-xl"></i>
+                            </button>
+                            <template x-if="isProfileMenuOpen">
+                                <ul x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="absolute right-0 w-28 p-2 mt-2 space-y-2 text-gray-600 bg-white border border-gray-100 rounded-md shadow-md dark:border-gray-700 dark:text-gray-300 dark:bg-gray-700" aria-label="submenu">
+                                    <li class="flex"><a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-600/30" href="#"><i class="text-lg mr-2 sui-send"></i><span>登录</span></a></li>
+                                    <li class="flex"><a class="inline-flex items-center w-full px-2 py-1 text-sm font-semibold transition-colors duration-150 hover:bg-slate-50 dark:hover:bg-slate-600/30" href="#"><i class="text-lg mr-2 sui-Palette"></i><span>注册</span></a></li>
+                                </ul>
+                            </template>
+                        </li>
+                    </ul>
+                    <button class="px-1 ml-5 rounded-md lg:hidden focus:outline-none focus:shadow-outline-purple" @click="$store.switch.toggleSideMenu()" aria-label="Menu">
+                        <i class="sui-Structuresquarescontrol text-xl"></i>
+                    </button>
+                </div>
+                <div class="header__blur"></div>
+            </header>
+
+            <!-- Content -->
+            <div class="container px-4 lg:px-10 2xl:px-14 mx-auto mt-6 xl:mt-10">
+
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 mb-8 p-8 lg:p-12">
+                    <div class="relative z-10">
+                        <h1 class="text-3xl lg:text-4xl font-bold text-white mb-3">Shoper — 空间材料 & 产品目录</h1>
+                        <p class="text-lg text-gray-300 max-w-2xl mb-6">专注于空间材料、灯光照明、家具收纳与五金配件的B2B商品目录管理平台。</p>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="/products" class="inline-flex items-center px-6 py-3 bg-rose-600 text-white font-semibold rounded-lg hover:bg-rose-700 active:bg-rose-800 transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2">浏览全部商品</a>
+                            <a href="/about" class="inline-flex items-center px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors">关于本店</a>
+                        </div>
+                    </div>
+                    <div class="absolute -top-20 -right-20 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl"></div>
+                    <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+                </div>
+
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    <div class="col-span-2 media media-4x1 rounded">
+                        <a href="/products" class="media-content rounded" style="background-image: url(https://picsum.photos/seed/b1/800/200);"></a>
+                    </div>
+                    <div class="media media-2x1 rounded">
+                        <a href="/products?group=灯光照明" class="media-content rounded" style="background-image: url(https://picsum.photos/seed/b2/400/200);"></a>
+                    </div>
+                    <div class="media media-2x1 rounded">
+                        <a href="/products?group=地面材料" class="media-content rounded" style="background-image: url(https://picsum.photos/seed/b3/400/200);"></a>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-4 pb-4">
+                    <div class="flex items-center text-xl font-medium dark:text-white">
+                        <span class="border-title">推荐商品</span>
+                    </div>
+                    <a href="/products" class="text-sm text-gray-500 hover:text-rose-600 transition-colors">全部商品 →</a>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4 2xl:gap-6 pb-8">
+                    {{range .Products}}
+                    <div class="transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="media media-4x3 rounded-lg overflow-hidden shadow-md">
+                            <a href="/product/{{.Slug}}" class="media-content rounded" style="background-image: url({{index .Images 0}});" title="{{.Name}}"></a>
+                        </div>
+                        <div class="text-gray-700 text-sm mt-3 2xl:px-1 dark:text-white">
+                            <a href="/product/{{.Slug}}" class="font-semibold line-2 block">{{.Name}}</a>
+                            <div class="mt-2 flex items-center justify-between">
+                                <span class="text-xs text-gray-500">{{.Brand}}</span>
+                                <span class="text-xs font-bold text-rose-600">¥{{price .PriceCents}}/{{.Unit}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <footer class="py-6 text-center md:py-12">
+                <div class="footer">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Copyright &copy; {{.CurrentYear}} <span x-html="Copyright"></span></span>
+                </div>
+            </footer>
+        </main>
+    </div>
+</div>
+
+<!-- Back to top -->
+<div id="widget-to-top" class="fixed transform transition ease-out duration-150 bottom-6 right-4 md:bottom-8 md:right-8 scale-0">
+    <button class="size-10 rounded-full m-auto py-2 text-sm font-medium text-white bg-indigo-500 border border-transparent focus:outline-none duration-300 hover:bg-indigo-700 lg:hover:scale-150" @click="top" aria-label="返回顶部">
+        <i class="text-md iconfont sui-go"></i>
+    </button>
+</div>
+
+<!-- Search overlay -->
+<div class="fixed top-0 w-full min-h-[280px] sm:min-h-[320px] z-50 bg-white py-12 sm:py-20 dark:bg-gray-800 dark:text-gray-200 transition-transform transition-opacity duration-300 ease-out transform -translate-y-full"
+     :class="{ '-translate-y-full' : $store.switch.isSearch }">
+    <div class="mx-auto container max-w-full sm:max-w-screen-sm md:max-w-screen-md lg:max-w-screen-lg px-4">
+        <div class="text-xl mb-4">
+            <label for="searchx">搜索</label>
+            <a id="searchurl" class="text-xs text-pink-500 mt-3 ml-2 hidden" :href="'/?s='+$store.switch.searchtext" x-text="$store.switch.searchtext"></a>
+        </div>
+        <form id="search" class="search-form" method="get" action="/">
+            <div class="flex space-x-4">
+                <div class="flex relative flex-1 flex-col">
+                    <div class="relative flex bg-gray-100 rounded-md dark:bg-gray-700">
+                        <input id="searchx" type="text" class="flex-1 bg-transparent border-0 px-4 py-2 text-sm focus:outline-none dark:text-gray-200 dark:placeholder-gray-400" placeholder="搜索..." name="s" x-model="$store.switch.searchtext">
+                        <button type="submit" class="flex-none border-0 py-2 px-4 text-gray-600 hover:text-rose-600 dark:text-gray-200 focus:outline-none transition-colors" aria-label="提交搜索">
+                            <i class="text-xl sui-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('data', () => ({
+            Copyright: 'Shoper — 空间材料 &amp; 产品目录',
+            isProfileMenuOpen: false,
+            toggleProfileMenu() { this.isProfileMenuOpen = !this.isProfileMenuOpen; },
+            closeProfileMenu() { this.isProfileMenuOpen = false; },
+            top() {
+                var d = document, dd = document.documentElement, db = document.body,
+                    top = dd.scrollTop || db.scrollTop,
+                    step = Math.floor(top / 20);
+                (function() { top -= step; if (top > -step) { (dd.scrollTop == 0 ? db.scrollTop : dd.scrollTop) = top; setTimeout(arguments.callee, 20); } })();
+            },
+        }));
+        Alpine.store('info', { dark: false, mode: 0 });
+        Alpine.store('switch', {
+            searchtext: '',
+            searchtype: '',
+            isSearch: true,
+            toggleSearch() { this.isSearch = !this.isSearch; },
+            isSideMenuOpen: true,
+            toggleSideMenu() { this.isSideMenuOpen = !this.isSideMenuOpen; },
+        });
+    });
+
+    // Toast system (matching Sinner)
+    function sinnertip(type, msg) {
+        var ico = type
+            ? '<span class="text-green-500 mb-2 inline-block"><svg class="w-28 mx-auto" fill="currentColor" viewBox="0 0 1024 1024"><path d="M666.272 472.288l-175.616 192a31.904 31.904 0 0 1-23.616 10.4h-0.192a32 32 0 0 1-23.68-10.688l-85.728-96a32 32 0 1 1 47.744-42.624l62.144 69.6 151.712-165.888a32 32 0 1 1 47.232 43.2m-154.24-344.32C300.224 128 128 300.32 128 512c0 211.776 172.224 384 384 384 211.68 0 384-172.224 384-384 0-211.68-172.32-384-384-384"/></svg></span>'
+            : '<span class="text-rose-500 mb-2 inline-block"><svg class="w-28 mx-auto" fill="currentColor" viewBox="0 0 1024 1024"><path d="M544 576a32 32 0 0 1-64 0v-256a32 32 0 0 1 64 0v256z m-32 160a32 32 0 1 1 0-64 32 32 0 0 1 0 64z m0-608C300.256 128 128 300.256 128 512s172.256 384 384 384 384-172.256 384-384S723.744 128 512 128z"/></svg></span>';
+        var c = type ? 'tips-success' : 'tips-error';
+        var html = '<section class="sinner-tips ' + c + ' sitips-open">' +
+            '<div class="fixed inset-0 z-40 flex items-end backdrop-blur-md bg-black/30 sm:items-center sm:justify-center"></div>' +
+            '<div class="fixed top-0 left-0 z-50 flex justify-center justify-items-center items-center w-full h-full border dark:border-gray-600"><div class="tips-body rounded pb-6 max-w-xs bg-gray-50 dark:text-white dark:bg-gray-600">' +
+            '<div class="rounded-t py-2 bg-gray-100 dark:bg-black"><div class="mx-2 text-right"><button class="size-3 bg-gray-300 rounded-full mx-1"></button><button class="size-3 bg-gray-300 rounded-full mx-1"></button><button class="size-3 bg-gray-300 rounded-full mx-1"></button></div></div>' +
+            '<div class="text-center px-6"><div class="px-5 dark:text-gray-100">' + ico + '<div class="text-sm">' + msg + '</div></div></div></div></div></section>';
+        document.body.insertAdjacentHTML('beforeend', html);
+        setTimeout(function() {
+            var tips = document.querySelector('.sinner-tips');
+            if (tips) {
+                tips.classList.remove('sitips-open');
+                tips.classList.add('sitips-close');
+                setTimeout(function() { if (tips.parentNode) tips.parentNode.removeChild(tips); }, 400);
+            }
+        }, 1000);
+    }
+
+    // Dark mode (matching Sinner)
+    window.main = {};
+    const channel = new BroadcastChannel('zeze_channel');
+    function handleColorSchemeChange(event) {
+        Alpine.store('info').dark = event.matches;
+        document.cookie = event.matches ? "dark=dark;path=/" : "dark=light;path=/";
+    }
+    main.darkmode = function(darkmode, type) {
+        const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        darkModeQuery.addListener(handleColorSchemeChange);
+        if (darkmode == 'auto') { localStorage.removeItem('theme'); Alpine.store('info').mode = 0; }
+        if (darkmode == 'dark') { localStorage.theme = 'dark'; Alpine.store('info').mode = 1; }
+        if (darkmode == 'light') { localStorage.theme = 'light'; Alpine.store('info').mode = 2; }
+        if ('theme' in localStorage) {
+            if (localStorage.theme === 'dark') { Alpine.store('info').dark = true; document.cookie = "dark=dark;path=/"; Alpine.store('info').mode = 1; }
+            else { Alpine.store('info').dark = false; document.cookie = "dark=light;path=/"; Alpine.store('info').mode = 2; }
+        } else { handleColorSchemeChange(darkModeQuery); }
+        if (darkmode != 0 && type != 0) { channel.postMessage('{"DarkMode":"' + darkmode + '"}'); }
+    };
+
+    // Scroll-to-top visibility
+    window.addEventListener("scroll", function() {
+        var topbtn = document.getElementById('widget-to-top');
+        var scroll = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        if (scroll >= 50) { topbtn.classList.remove("scale-0"); } else { topbtn.classList.add("scale-0"); }
+    });
+</script>
+
+
+        let html = '<div class="ze-modal-backdrop ze-dialog"></div><div class="ze-modal-panel ze-dialog" role="dialog"><div><p class="text-base font-semibold mb-4">' + title + '</p></div>';
+
+        if (type == 'table') {
+            html += '<form><p class="form-group"><label>行数：</label><input type="number" class="rows" value="3" min="1" max="20" style="width: 60px;"></p><p class="form-group"><label>列数：</label><input type="number" class="cols" value="3" min="1" max="10" style="width: 60px;"></p><p class="form-group"><label><input type="checkbox" class="header" checked> 包含表头</label></p><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'text') {
+            var ttt = (function() { try { return $('#text').changeText ? $('#text').changeText() : ''; } catch (e) { return ''; } })();
+            html += '<form><p class="form-group"><label>文本颜色：</label><select id="text-color"><option value="none">默认</option><option value="red">红色</option><option value="green">绿色</option><option value="blue">蓝色</option><option value="yellow">黄色</option><option value="purple">紫色</option></select></p><p class="form-group"><label>颜色深浅：</label><select id="text-color-du"><option>50</option><option>100</option><option>200</option><option>300</option><option>400</option><option>500</option><option selected>600</option><option>700</option><option>800</option><option>900</option></select></p><p class="form-group"><label>文本装饰：</label><select id="text-color-decoration"><option value="none">无</option><option value="underline">下划线</option><option value="underline decoration-double">双下划线</option><option value="line-through">删除线</option><option value="underline decoration-wavy">波浪线</option></select></p><p>文字内容*</p><input type="text" class="title" value="' + ttt + '"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'tip') {
+            html += '<form><p class="form-group"><label>提示类型：</label><select><option selected>info</option><option>success</option><option>warning</option><option>danger</option></select></p><p>请填写提示内容*</p><input type="text" class="text"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'tabs') {
+            html += '<form id="tabs"><button type="button" class="btn btn-s primary" id="btn-tab-add">新建标签页</button><div class="content-tabs" style="margin-top: 10px;"><div class="content-tabs-head"></div><div class="content-tabs-body"></div></div><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'collapse') {
+            html += '<form><p>标题*</p><input type="text" class="title"><p>内容</p><textarea class="text" rows="4"></textarea><p class="form-group"><label>是否默认展开：</label><select class="auto"><option value="0">否</option><option value="1" selected>是</option></select></p><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'login') {
+            html += '<form><p>登录可见*</p><textarea class="login-content" rows="4"></textarea><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'comments') {
+            html += '<form><p>评论可见*</p><textarea class="comments-content" rows="4"></textarea><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'code') {
+            html += '<form><p>可视代码*</p><textarea class="curl" rows="6"></textarea><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'photo') {
+            html += '<form><p>自定义名称</p><input type="text" class="title"><p>图片链接*</p><input type="text" class="url"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'button') {
+            html += '<form><p class="form-group"><label>按钮颜色：</label><select id="button-color"><option value="blue">蓝</option><option value="red">红</option><option value="green">绿</option><option value="purple">紫</option><option value="yellow">黄</option></select></p><p>链接名称*</p><input type="text" class="title"><p>链接地址*</p><input type="text" class="url"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'copy') {
+            html += '<form><p>标题*</p><input type="text" class="nurl"><p>被复制的内容</p><input type="text" class="turl"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'todo') {
+            html += '<form><p class="form-group">状态：<select id="todo"><option value="">未完成</option><option value="x">已完成</option></select></p><p>文本内容*</p><input type="text" class="turl"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        } else if (type == 'file') {
+            html += '<form><p>链接名称*</p><input type="text" class="title"><p>链接地址*</p><input type="text" class="url"><br><br><button type="button" class="ze-ok btn btn-s primary">确定</button><button type="button" class="ze-close btn btn-s" style="margin-left: 8px;">取消</button></form>';
+        }
+
+        html += '</div>';
+        $('body').append(html);
+
+        if (type == 'tabs') {
+            nextTabIndex = 1;
+            nextTabTitleIndex = 1;
+            createNewTab();
+            createNewTab();
+            $('.content-tabs .content-tab-title:first').addClass('selected');
+            $('.content-tabs .content-tab-content:first').addClass('selected');
+            bindTabEvent();
+            $('#btn-tab-add').off('click').on('click', function() {
+                createNewTab();
+                bindTabEvent();
+                $('.content-tab-title[data-tab-index="' + (nextTabIndex - 1) + '"]').trigger('click');
+            });
+        }
+        ze.close();
+        $('.ze-ok').off('click').on('click', function() { ze.ok(type); });
+    };
+
+    $(document).ready(function() {
+        items.forEach(function(item) {
+            var $btn = $('<li class="wmd-button" id="' + item.id + '" title="' + item.title + '">' + item.svg + '</li>');
+            if (item.type != 'link' && item.type != 'center' && item.type != 'right' && item.type != 'kongge' && item.type != 'indent') {
+                $btn.on('click', function() { ze.dialog(item.type, item.title); });
+            }
+            $('#wmd-button-row').append($btn);
+        });
+        $('#wmd-kongge-button').click(function() { $('#text').insertContent('\u3000'); });
+        $('#wmd-center-button').click(function() { $('#text').insertContent('{center}' + ($('#text').changeText ? $('#text').changeText() : '') + '{/center}'); });
+        $('#wmd-right-button').click(function() { $('#text').insertContent('{right}' + ($('#text').changeText ? $('#text').changeText() : '') + '{/right}'); });
+        $('#wmd-indent-button').click(function() { $('#text').insertContent('\u3000\u3000'); });
+    });
+
+    // jQuery insertContent plugin
+    (function($) {
+        $.fn.extend({
+            insertContent: function(myValue) {
+                var $t = $(this)[0];
+                if (document.selection) {
+                    this.focus();
+                    var sel = document.selection.createRange();
+                    sel.text = myValue;
+                } else if ($t.selectionStart || $t.selectionStart == '0') {
+                    var startPos = $t.selectionStart;
+                    var endPos = $t.selectionEnd;
+                    $t.value = $t.value.substring(0, startPos) + myValue + $t.value.substring(endPos, $t.value.length);
+                    this.focus();
+                    $t.selectionStart = startPos + myValue.length;
+                    $t.selectionEnd = startPos + myValue.length;
+                } else {
+                    this.value += myValue;
+                    this.focus();
+                }
+                return this;
+            },
+            changeText: function() {
+                var txtarea = this[0];
+                if (txtarea.selectionStart !== undefined) {
+                    return txtarea.value.substring(txtarea.selectionStart, txtarea.selectionEnd);
+                }
+                return '';
+            }
+        });
+    })(jQuery);
+
+    // Phone-side toast
+    var ClipboardJS = window.ClipboardJS;
+    var clipboard = new ClipboardJS('.copybtn');
+    clipboard.on('success', function(e) { sinnertip(1, '复制成功！'); e.clearSelection(); });
+    clipboard.on('error', function(e) { sinnertip(0, '复制失败！'); });
+</script>
+
+</body>
+</html>

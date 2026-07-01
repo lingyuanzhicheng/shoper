@@ -1,0 +1,56 @@
+{{define "content_cart"}}
+                <div class="page-header"><div><h2 class="page-header-title">购物车</h2></div></div>
+                {{if .CartLines}}
+                <div class="cart-layout">
+                    <div class="cart-list business-card">
+                        <div class="cart-head"><span>商品</span><span>数量</span><span>小计</span><span>操作</span></div>
+                        {{range .CartLines}}
+                        <div class="cart-row">
+                            <img src="{{index .Product.Images 0}}" class="cart-row-image" alt="{{.Product.Name}}">
+                            <div class="cart-row-body">
+                                <a class="cart-row-title" href="/product/{{.Product.Slug}}">{{.Product.Name}}</a>
+                                <div class="cart-row-meta">{{.Product.Brand}} · ¥{{price .Product.PriceCents}} / {{.Product.Unit}}</div>
+                            </div>
+                            <form method="post" action="/cart/update" class="cart-qty-form"><input type="hidden" name="product_id" value="{{.Product.ID}}"><input name="qty" type="text" inputmode="numeric" pattern="[0-9]*" value="{{.Qty}}" onchange="this.form.submit()"></form>
+                            <div class="cart-row-price">¥{{price .SubCents}}</div>
+                            <form method="post" action="/cart/remove" class="cart-row-action"><input type="hidden" name="product_id" value="{{.Product.ID}}"><button aria-label="移除"><i class="sui-Trashcancontrol"></i></button></form>
+                        </div>
+                        {{end}}
+                    </div>
+                    <div class="cart-side">
+                        {{if and .Feature.TradeEnabled (or (and .Feature.CartEnabled .Feature.VoucherEnabled) .IsAdmin)}}
+                        <section class="business-card order-ticket-card">
+                            <div class="order-section-title">报价票据</div>
+                            <a class="cart-ticket-export-btn" href="/cart/ticket/export" target="_blank">导出报价票据</a>
+                        </section>
+                        {{end}}
+                        <div class="cart-submit-card business-card">
+                            <div class="text-lg font-semibold dark:text-white mb-4">提交订单</div>
+                            <div class="cart-summary-line"><span>商品合计</span><span>¥{{price .CartTotal}}</span></div>
+                            {{if and .Feature.TradeEnabled (or .Feature.OrderEnabled .IsAdmin)}}
+                            <form method="post" action="/order/create" class="cart-submit-form" x-data="{community:'{{.Community}}', building:'{{.Building}}', unit_no:'{{.UnitNo}}', room:'{{.Room}}', notes:'{{.Notes}}'}">
+                                <label class="text-sm text-gray-600 dark:text-gray-400">联系人 <span class="text-rose-600">*</span></label>
+                                <input name="contact_name" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="输入联系人姓名" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">联系电话 <span class="text-rose-600">*</span></label>
+                                <input name="phone" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="输入您的手机号" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">小区名称 <span class="text-rose-600">*</span></label>
+                                <input name="community" x-model="community" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="小区名称" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">楼栋号 <span class="text-rose-600">*</span></label>
+                                <input name="building" x-model="building" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="楼栋号" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">单元号 <span class="text-rose-600">*</span></label>
+                                <input name="unit_no" x-model="unit_no" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="单元号" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">房号 <span class="text-rose-600">*</span></label>
+                                <input name="room" x-model="room" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" placeholder="房号" required>
+                                <label class="text-sm text-gray-600 dark:text-gray-400">备注说明 <span x-text="(community && building && unit_no && room) ? '(选填)' : '(必填)'" class="text-rose-600"></span></label>
+                                <textarea name="notes" x-model="notes" rows="2" class="form-control bg-gray-50 rounded dark:bg-gray-700 dark:text-white" :required="!(community && building && unit_no && room)" placeholder="地址信息不完整时，备注说明为必填项"></textarea>
+                                <button>提交订单</button>
+                            </form>
+                            {{else}}
+                            <p class="mt-3 text-xs text-gray-400">{{if not .Feature.TradeEnabled}}当前交易功能已关闭，暂不支持提交订单。{{else}}当前订单功能仅对后台开放，请联系管理员提交订单。{{end}}</p>
+                            {{end}}
+                            <p class="mt-3 text-xs text-gray-400">订单提交后您将获得订单号，可凭订单号与联系电话追踪订单状态。</p>
+                        </div>
+                    </div>
+                </div>
+                {{else}}<div class="py-24"><div class="svg-404 mx-auto mb-3"></div><p class="text-base text-gray-400 text-center dark:text-gray-200">购物车为空</p></div>{{end}}
+{{end}}

@@ -1,0 +1,79 @@
+{{define "content_admin_settings-ticket"}}
+                <div class="admin-shell">
+                    <div class="page-header"><div><h2 class="page-header-title">票据设置</h2><p class="page-header-desc">配置订单票据单上部分预设信息。</p></div></div>
+                    <form method="post" action="/admin/settings/ticket">
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Structuresquarescontrol form-section-icon"></i>票据设置</h3>
+                                    <p class="settings-card-desc">为生成的订单票据单中所需要的一些基本信息进行设置</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="settings-field settings-field-full">
+                                <label>二维码图片</label>
+                                <input type="hidden" name="ticket_qrcode" id="ticket-qrcode" value="{{.Ticket.QRCodeURL}}">
+                                <div class="settings-upload-preview" id="ticket-qrcode-preview" onclick="document.getElementById('ticket-qrcode-file').click()" style="width:160px;aspect-ratio:1/1">
+                                    <img id="ticket-qrcode-img" src="{{.Ticket.QRCodeURL}}" {{if not .Ticket.QRCodeURL}}style="display:none"{{end}}>
+                                    <span id="ticket-qrcode-placeholder" class="settings-upload-placeholder" {{if .Ticket.QRCodeURL}}style="display:none"{{end}}>点击上传二维码</span>
+                                    <input id="ticket-qrcode-file" type="file" accept="image/*" onchange="uploadTicketQRCode(this)" class="hidden">
+                                </div>
+                                {{if .Ticket.QRCodeURL}}<p class="settings-editor-hint">当前二维码：<a href="{{.Ticket.QRCodeURL}}" target="_blank">{{.Ticket.QRCodeURL}}</a></p>{{else}}<p class="settings-editor-hint">未上传二维码时，票据单左上角将不显示二维码。</p>{{end}}
+                            </div>
+                            <div class="settings-field-row" style="display:flex;gap:18px">
+                                <div class="settings-field">
+                                    <label>联系方式 1</label>
+                                    <input name="ticket_contact" value="{{.Ticket.Contact}}" placeholder="如 153-0000-0000">
+                                </div>
+                                <div class="settings-field">
+                                    <label>联系方式 2</label>
+                                    <input name="ticket_contact2" value="{{.Ticket.Contact2}}" placeholder="如 400-000-0000">
+                                </div>
+                            </div>
+                            <div class="settings-field-row settings-field-full" style="display:flex;gap:18px">
+                                <div class="settings-field feature-toggle-field ticket-trackqr-field">
+                                    <label>订单追踪二维码</label>
+                                    <div class="feature-toggle-seg">
+                                        <input type="hidden" name="ticket_trackqr" value="{{if .Ticket.TrackQR}}1{{else}}0{{end}}">
+                                        <button type="button" class="feature-toggle-btn {{if .Ticket.TrackQR}}active{{end}}" data-value="1" onclick="setTicketTrackQR(this)">开启订单追踪码</button>
+                                        <button type="button" class="feature-toggle-btn {{if not .Ticket.TrackQR}}active{{end}}" data-value="0" onclick="setTicketTrackQR(this)">关闭订单追踪码</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-field-row" style="display:flex;gap:18px">
+                                <div class="settings-field">
+                                    <label>票据说明</label>
+                                    <input name="ticket_description" value="{{.Ticket.Description}}" placeholder="如 本票据仅作订单凭证，请妥善保管">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    </form>
+                </div>
+                <script>
+                window.setTicketTrackQR = function(btn) {
+                    var seg = btn.parentElement;
+                    var hidden = seg.querySelector('input[type="hidden"]');
+                    seg.querySelectorAll('.feature-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    if(hidden) hidden.value = btn.getAttribute('data-value');
+                };
+                window.uploadTicketQRCode = function(input) {
+                    if(!input.files || !input.files[0]) return;
+                    var file = input.files[0];
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var image = new Image();
+                        image.onload = function() {
+                            openTicketQRCrop(image, file.name);
+                            input.value = '';
+                        };
+                        image.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                };
+                </script>
+{{end}}

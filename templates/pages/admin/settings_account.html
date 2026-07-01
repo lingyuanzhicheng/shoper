@@ -1,0 +1,124 @@
+{{define "content_admin_settings-account"}}
+                <div class="admin-shell">
+                    <div class="page-header"><div><h2 class="page-header-title">基本设置</h2><p class="page-header-desc">修改平台认证信息、平台名称与功能开关等基本信息。</p></div></div>
+                    <form method="post" action="/admin/settings/account">
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-shezhi form-section-icon"></i>认证设置</h3>
+                                    <p class="settings-card-desc">修改管理员登录电话与密钥</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="settings-field-row" style="grid-column:1/span 1;display:flex;gap:18px">
+                                <div class="settings-field">
+                                    <label>管理员密钥</label>
+                                    <input name="admin_key" value="{{.SettingsKey}}" placeholder="登录密钥">
+                                </div>
+                                <div class="settings-field">
+                                    <label>管理员电话</label>
+                                    <input name="admin_phone" value="{{.AdminPhone}}" placeholder="管理员电话号码">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    </form>
+                    <form method="post" action="/admin/settings/account">
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Structuresquarescontrol form-section-icon"></i>平台信息</h3>
+                                    <p class="settings-card-desc">显示在侧边栏 Logo 与首页 Banner</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                            </div>
+                        </div>
+                        <div class="settings-card-body">
+                            <div class="settings-field-row" style="display:flex;gap:18px">
+                                <div class="settings-field">
+                                    <label>平台名称</label>
+                                    <input name="platform_name" value="{{.PlatformName}}" placeholder="如 Shoper">
+                                </div>
+                                <div class="settings-field">
+                                    <label>平台宣传</label>
+                                    <input name="platform_subtitle" value="{{.PlatformSubtitle}}" placeholder="如 新鲜直达">
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    </form>
+                    <form method="post" action="/admin/settings/feature">
+                    <section class="business-card settings-card">
+                        <div class="settings-card-header">
+                            <div class="settings-card-title-row">
+                                <div class="settings-card-title-text">
+                                    <h3><i class="sui-Structuresquarescontrol form-section-icon"></i>功能设置</h3>
+                                    <p class="settings-card-desc">控制平台的功能开关，如购物车、票据、订单等</p>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
+                            </div>
+                        </div>
+                        <div class="settings-card-body feature-toggle-body">
+                            <div class="settings-field-row" style="display:flex;gap:18px">
+                                <div class="settings-field feature-toggle-field{{if not .Feature.TradeEnabled}} feature-toggle-disabled{{end}}">
+                                    <label>购物车功能</label>
+                                    <div class="feature-toggle-seg">
+                                        <input type="hidden" name="feature_cart" value="{{.Feature.CartMode}}">
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.CartMode `frontend`}}active{{end}}" data-value="frontend" onclick="setFeatureToggle(this)">开启前台</button>
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.CartMode `backend`}}active{{end}}" data-value="backend" onclick="setFeatureToggle(this)">仅限后台</button>
+                                    </div>
+                                </div>
+                                <div class="settings-field feature-toggle-field{{if not .Feature.TradeEnabled}} feature-toggle-disabled{{end}}">
+                                    <label>票据功能</label>
+                                    <div class="feature-toggle-seg">
+                                        <input type="hidden" name="feature_voucher" value="{{.Feature.VoucherMode}}">
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.VoucherMode `frontend`}}active{{end}}" data-value="frontend" onclick="setFeatureToggle(this)">开启前台</button>
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.VoucherMode `backend`}}active{{end}}" data-value="backend" onclick="setFeatureToggle(this)">仅限后台</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-field-row" style="display:flex;gap:18px">
+                                <div class="settings-field feature-toggle-field{{if not .Feature.TradeEnabled}} feature-toggle-disabled{{end}}">
+                                    <label>订单功能</label>
+                                    <div class="feature-toggle-seg">
+                                        <input type="hidden" name="feature_order" value="{{.Feature.OrderMode}}">
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.OrderMode `frontend`}}active{{end}}" data-value="frontend" onclick="setFeatureToggle(this)">开启前台</button>
+                                        <button type="button" class="feature-toggle-btn {{if eq .Feature.OrderMode `backend`}}active{{end}}" data-value="backend" onclick="setFeatureToggle(this)">仅限后台</button>
+                                    </div>
+                                </div>
+                                <div class="settings-field feature-toggle-field">
+                                    <label>交易功能</label>
+                                    <div class="feature-toggle-seg">
+                                        <input type="hidden" name="feature_trade" value="{{if .Feature.TradeEnabled}}enabled{{else}}disabled{{end}}">
+                                        <button type="button" class="feature-toggle-btn feature-toggle-trade {{if .Feature.TradeEnabled}}active{{end}}" data-value="enabled" onclick="setFeatureToggle(this)">开启支持</button>
+                                        <button type="button" class="feature-toggle-btn feature-toggle-trade {{if not .Feature.TradeEnabled}}active{{end}}" data-value="disabled" onclick="setFeatureToggle(this)">关闭支持</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="feature-toggle-hint">将「交易功能」设为关闭支持后，购物车、票据、订单功能将一并关闭，前台与后台相关入口均会被隐藏。</p>
+                        </div>
+                    </section>
+                    </form>
+                </div>
+                <script>
+                window.setFeatureToggle = function(btn) {
+                    var seg = btn.parentElement;
+                    var hidden = seg.querySelector('input[type="hidden"]');
+                    seg.querySelectorAll('.feature-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                    if(hidden) hidden.value = btn.getAttribute('data-value');
+                    var tradeHidden = document.querySelector('input[name="feature_trade"]');
+                    var tradeEnabled = tradeHidden ? tradeHidden.value !== 'disabled' : true;
+                    document.querySelectorAll('.feature-toggle-field').forEach(function(field) {
+                        var h = field.querySelector('input[type="hidden"]');
+                        if(h && h.name !== 'feature_trade') {
+                            field.classList.toggle('feature-toggle-disabled', !tradeEnabled);
+                        }
+                    });
+                };
+                </script>
+{{end}}
