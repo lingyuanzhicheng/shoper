@@ -2,12 +2,13 @@
                 <div class="admin-shell">
                     <div class="page-header"><div><h2 class="page-header-title">基本设置</h2><p class="page-header-desc">修改平台认证信息、平台名称与功能开关等基本信息。</p></div></div>
                     <form method="post" action="/admin/settings/account">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <section class="business-card settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title-row">
                                 <div class="settings-card-title-text">
                                     <h3><i class="sui-shezhi form-section-icon"></i>认证设置</h3>
-                                    <p class="settings-card-desc">修改管理员登录电话与密钥</p>
+                                    <p class="settings-card-desc">修改管理员登录用户名和密码</p>
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm">保存设置</button>
                             </div>
@@ -15,18 +16,19 @@
                         <div class="settings-card-body">
                             <div class="settings-field-row" style="grid-column:1/span 1;display:flex;gap:18px">
                                 <div class="settings-field">
-                                    <label>管理员密钥</label>
-                                    <input name="admin_key" value="{{.SettingsKey}}" placeholder="登录密钥">
+                                    <label>管理员密码</label>
+                                    <input name="admin_password" value="{{.SettingsPassword}}" placeholder="登录密码">
                                 </div>
                                 <div class="settings-field">
-                                    <label>管理员电话</label>
-                                    <input name="admin_phone" value="{{.AdminPhone}}" placeholder="管理员电话号码">
+                                    <label>管理员用户名</label>
+                                    <input name="admin_username" value="{{.AdminUsername}}" placeholder="管理员用户名">
                                 </div>
                             </div>
                         </div>
                     </section>
                     </form>
                     <form method="post" action="/admin/settings/account">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <section class="business-card settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title-row">
@@ -52,6 +54,7 @@
                     </section>
                     </form>
                     <form method="post" action="/admin/settings/feature">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <section class="business-card settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title-row">

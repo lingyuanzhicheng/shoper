@@ -123,27 +123,29 @@ type Pagination struct {
 }
 
 type PageData struct {
-	Title       string
-	View        string
-	AdminView   string
-	Query       string
-	Group       string
-	Brand       string
-	Message     string
-	MessageType string
-	IsAdmin     bool
-	AdminPhone  string
-	Products    []Product
-	Product     Product
-	Categories  []Category
-	CartLines   []CartLine
-	CartCount   int
-	CartTotal   int64
-	Groups      []string
-	Order       Order
-	Orders      []Order
-	CurrentYear int
-	Pagination  Pagination
+	Title           string
+	View            string
+	AdminView       string
+	Query           string
+	Group           string
+	Brand           string
+	Message         string
+	MessageType     string
+	IsAdmin         bool
+	AdminUsername   string
+	CSRFToken       string
+	Products        []Product
+	Product         Product
+	Categories      []Category
+	CartLines       []CartLine
+	CartCount       int
+	CartTotal       int64
+	Groups          []string
+	Order           Order
+	Orders          []Order
+	CurrentYear     int
+	Pagination      Pagination
+	OrderStatusList []string
 
 	AllProducts      []Product
 	AllBrands        []Brand
@@ -171,7 +173,7 @@ type PageData struct {
 	AboutTitle       string
 	AboutContent     template.HTML
 	AboutContentRaw  string
-	SettingsKey      string
+	SettingsPassword string
 	HomeSettings     HomeSettings
 	MediaFiles       []MediaFile
 	Feature          FeatureSettings
@@ -234,4 +236,40 @@ type HomeSettings struct {
 	Carousel2      []CarouselSlide
 	RecommendIDs   []int64
 	RecommendCount int
+}
+
+// 订单状态枚举常量
+const (
+	StatusPending    = "待确认"
+	StatusConfirmed  = "已确认"
+	StatusDelivering = "待配送"
+	StatusDelivered  = "已配送"
+	StatusPendingPay = "待付款"
+	StatusPaid       = "已付款"
+	StatusCancelled  = "已取消"
+	StatusArchived   = "已归档"
+)
+
+// IsValidOrderStatus 判断状态值是否合法
+func IsValidOrderStatus(s string) bool {
+	switch s {
+	case StatusPending, StatusConfirmed, StatusDelivering, StatusDelivered,
+		StatusPendingPay, StatusPaid, StatusCancelled, StatusArchived:
+		return true
+	}
+	return false
+}
+
+// OrderStatusList 返回订单状态的有序列表，供模板渲染状态按钮
+func OrderStatusList() []string {
+	return []string{
+		StatusPending,
+		StatusConfirmed,
+		StatusDelivering,
+		StatusDelivered,
+		StatusPendingPay,
+		StatusPaid,
+		StatusCancelled,
+		StatusArchived,
+	}
 }

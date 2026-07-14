@@ -33,7 +33,7 @@ func trackHandler(w http.ResponseWriter, r *http.Request) {
 		} else if order.Archived {
 			data.Message = "此订单已被归档"
 			data.MessageType = "error"
-		} else if order.Status == "已取消" {
+		} else if order.Status == models.StatusCancelled {
 			data.Message = "此订单已被取消"
 			data.MessageType = "error"
 		} else {

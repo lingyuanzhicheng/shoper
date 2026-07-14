@@ -16,6 +16,10 @@ func adminBrandsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	if r.Method == http.MethodPost {
 		deleteID, _ := strconv.ParseInt(strings.TrimSpace(r.FormValue("delete_id")), 10, 64)
 		if deleteID > 0 {

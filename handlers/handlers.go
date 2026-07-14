@@ -95,7 +95,9 @@ func render(w http.ResponseWriter, r *http.Request, data models.PageData) {
 	data.CartCount = cartCount(r)
 	data.CurrentYear = time.Now().Year()
 	data.IsAdmin = middleware.IsAdmin(r)
-	data.AdminPhone = middleware.GetPhone()
+	data.AdminUsername = middleware.GetUsername()
+	data.CSRFToken = middleware.GetCSRFToken(r)
+	data.OrderStatusList = models.OrderStatusList()
 	data.PlatformName = db.GetSetting("platform_name")
 	if data.PlatformName == "" {
 		data.PlatformName = "Shoper"
@@ -227,4 +229,5 @@ func RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/cart/ticket/export", cartTicketExportHandler)
 	mux.HandleFunc("/track/ticket/export", trackTicketExportHandler)
 	mux.HandleFunc("/upload", uploadHandler)
+	mux.HandleFunc("/uploads/voucher/", voucherImageHandler)
 }

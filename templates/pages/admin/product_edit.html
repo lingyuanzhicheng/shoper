@@ -4,6 +4,7 @@
                     <div class="page-header"><div><h2 class="page-header-title">{{if $p.ID}}编辑商品{{else}}新建商品{{end}}</h2><p class="page-header-desc">{{if $p.ID}}{{.EditProduct.Name}}{{else}}填写商品信息{{end}}</p></div><a class="text-sm text-gray-500 hover:text-rose-600 transition-colors inline-flex items-center gap-1" href="/admin/products"><i class="sui-forward-right rotate-180 text-xs"></i>返回列表</a></div>
                     <div class="business-card p-6">
                         <form method="post" action="{{if $p.ID}}/admin/product/{{$p.ID}}{{else}}/admin/product/new{{end}}" enctype="multipart/form-data" x-data="{images: [{{range $i, $img := $p.Images}}{{if $i}},{{end}}'{{$img}}'{{end}}], uploading: false, availableTags: [{{range $i, $t := $p.Tags}}{{if $i}},{{end}}{id:{{$t.ID}}, name:'{{$t.Name}}'}{{end}}], selectedTags: [{{range $i, $t := $p.Tags}}{{if $i}},{{end}}{{$t.ID}}{{end}}]}" x-effect="document.getElementById('selected-tags-json').value = JSON.stringify(selectedTags)">
+                            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                             <div class="form-section">
                                 <h3><i class="sui-Information form-section-icon"></i>基本信息</h3>
                                 <div class="form-row">
@@ -84,7 +85,7 @@
                                             <span class="spinner"></span>
                                             <span>上传中</span>
                                         </div>
-                                        <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" :disabled="uploading" @change="uploading=true; const fd=new FormData(); fd.append('file', $event.target.files[0]); fetch('/upload', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{images.push(d.url); uploading=false}).catch(()=>{uploading=false})">
+                                        <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" :disabled="uploading" @change="uploading=true; const fd=new FormData(); fd.append('file', $event.target.files[0]); fd.append('csrf_token', getCookie('csrf_token')); fetch('/upload', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{images.push(d.url); uploading=false}).catch(()=>{uploading=false})">
                                     </div>
                                 </div>
                                 <input type="hidden" name="img_order" :value="images.join(',')">

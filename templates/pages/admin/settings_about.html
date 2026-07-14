@@ -2,6 +2,7 @@
                 <div class="admin-shell">
                     <div class="page-header"><div><h2 class="page-header-title">关于本店</h2><p class="page-header-desc">编辑前台"关于本店"页面的标题与内容。</p></div></div>
                     <form method="post" action="/admin/settings/about">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <section class="business-card settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title-row">

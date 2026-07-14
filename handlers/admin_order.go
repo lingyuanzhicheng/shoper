@@ -60,13 +60,19 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/orders", http.StatusSeeOther)
 		return
 	}
+	if !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	hash := strings.TrimPrefix(r.URL.Path, "/admin/order/update/")
 	status := strings.TrimSpace(r.FormValue("status"))
-	totalYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("total")), 64)
-	discountYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("discount")), 64)
-	discountCents := int64(discountYuan * 100)
-	paidYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("paid")), 64)
-	paidCents := int64(paidYuan * 100)
+	if !models.IsValidOrderStatus(status) {
+		http.Error(w, "invalid order status", http.StatusBadRequest)
+		return
+	}
+	discountCents, _ := utils.ParseYuanToCents(r.FormValue("discount"))
+	paidCents, _ := utils.ParseYuanToCents(r.FormValue("paid"))
+	_ = r.FormValue("total") // total 由 itemsTotal 计算，不直接解析
 	contactName := strings.TrimSpace(r.FormValue("contact_name"))
 	phone := strings.TrimSpace(r.FormValue("phone"))
 	community := strings.TrimSpace(r.FormValue("community"))
@@ -109,7 +115,7 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		qty, _ := strconv.Atoi(utils.ValueAt(qtys, i))
-		priceYuan, _ := strconv.ParseFloat(utils.ValueAt(prices, i), 64)
+		priceCents, _ := utils.ParseYuanToCents(utils.ValueAt(prices, i))
 		unit := strings.TrimSpace(utils.ValueAt(units, i))
 		sortOrder, _ := strconv.Atoi(utils.ValueAt(sorts, i))
 		isReturn := 0
@@ -126,7 +132,6 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		if unit == "" {
 			unit = "件"
 		}
-		priceCents := int64(priceYuan * 100)
 		lineCents := int64(qty) * priceCents
 		if isReturn == 1 {
 			lineCents = -lineCents
@@ -161,7 +166,7 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		_, _ = db.DB.Exec(`UPDATE order_items SET product_name = ?, brand = ?, unit = ?, qty = ?, price_cents = ?, line_cents = ?, sort_order = ?, delivered = ?, is_return = ? WHERE id = ? AND order_id = ?`, name, brand, unit, qty, priceCents, lineCents, sortOrder, delivered, isReturn, itemID, order.ID)
 	}
 	if itemsTotal == 0 {
-		itemsTotal = int64(totalYuan*100) + discountCents
+		itemsTotal = 0 + discountCents
 	}
 	if discountCents < 0 {
 		discountCents = 0
@@ -204,6 +209,10 @@ func adminOrderCustomerUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/orders", http.StatusSeeOther)
 		return
 	}
+	if !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	hash := strings.TrimPrefix(r.URL.Path, "/admin/order/customer/update/")
 	contactName := strings.TrimSpace(r.FormValue("contact_name"))
 	phone := strings.TrimSpace(r.FormValue("phone"))
@@ -239,8 +248,16 @@ func adminOrderStatusUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/orders", http.StatusSeeOther)
 		return
 	}
+	if !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	hash := strings.TrimPrefix(r.URL.Path, "/admin/order/status/update/")
 	status := strings.TrimSpace(r.FormValue("status"))
+	if !models.IsValidOrderStatus(status) {
+		http.Error(w, "invalid order status", http.StatusBadRequest)
+		return
+	}
 	_, err := db.DB.Exec(`UPDATE orders SET status = ? WHERE hash = ?`, status, hash)
 	if r.URL.Query().Get("ajax") == "1" {
 		w.Header().Set("Content-Type", "application/json")
@@ -288,6 +305,10 @@ func adminOrderVoucherAddHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/orders", http.StatusSeeOther)
 		return
 	}
+	if !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	hash := r.FormValue("order_hash")
 	vtype := r.FormValue("vtype")
 	desc := r.FormValue("description")
@@ -295,8 +316,7 @@ func adminOrderVoucherAddHandler(w http.ResponseWriter, r *http.Request) {
 	amountCents := int64(0)
 	isRefund := int64(0)
 	if vtype == "statement" {
-		amountYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("amount")), 64)
-		amountCents = int64(amountYuan * 100)
+		amountCents, _ = utils.ParseYuanToCents(r.FormValue("amount"))
 		if r.FormValue("is_refund") == "1" {
 			isRefund = 1
 		}
@@ -310,6 +330,11 @@ func adminOrderVoucherAddHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, "/admin/orders/"+hash, http.StatusSeeOther)
 		return
+	}
+	if strings.HasPrefix(imageURL, "data:") {
+		if saved, err := utils.SaveImageDataURL(imageURL, "voucher"); err == nil {
+			imageURL = saved
+		}
 	}
 	res, err := db.DB.Exec(`INSERT INTO order_vouchers (order_hash, type, image_url, description, amount_cents, is_refund, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		hash, vtype, imageURL, desc, amountCents, isRefund, createdAt)
@@ -330,6 +355,10 @@ func adminOrderVoucherAddHandler(w http.ResponseWriter, r *http.Request) {
 func adminOrderVoucherDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAdmin(r) || r.Method != http.MethodPost {
 		http.Redirect(w, r, "/admin/orders", http.StatusSeeOther)
+		return
+	}
+	if !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
 		return
 	}
 	idStr := r.FormValue("id")

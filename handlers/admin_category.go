@@ -16,6 +16,10 @@ func adminCategoriesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	if r.Method == http.MethodPost {
 		name := strings.TrimSpace(r.FormValue("name"))
 		if name != "" {

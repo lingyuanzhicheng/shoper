@@ -7,7 +7,7 @@
                         <div class="brand-card">
                             <div class="brand-logo-wrap">{{if .Logo}}<img src="{{.Logo}}" alt="{{.Name}}">{{else}}<span>品</span>{{end}}</div>
                             <div class="brand-card-main"><div class="brand-card-name">{{.Name}}</div><div class="brand-card-desc">{{if .Description}}{{.Description}}{{else}}暂无介绍{{end}}</div></div>
-                            <div class="brand-card-actions"><button type="button" onclick="openBrandModal(this)" data-id="{{.ID}}" data-name="{{.Name}}" data-logo="{{.Logo}}" data-description="{{.Description}}" aria-label="编辑品牌"><i class="sui-Markpencilcontrol"></i></button><form method="post" action="/admin/brands"><input type="hidden" name="delete_id" value="{{.ID}}"><button type="button" onclick="window.confirmAction('确认删除', '确定要删除品牌「{{.Name}}」吗？', 'danger').then(function(ok){ if(ok) this.closest('form').submit(); }.bind(this))" aria-label="删除品牌"><i class="sui-Trashcancontrol"></i></button></form></div>
+                            <div class="brand-card-actions"><button type="button" onclick="openBrandModal(this)" data-id="{{.ID}}" data-name="{{.Name}}" data-logo="{{.Logo}}" data-description="{{.Description}}" aria-label="编辑品牌"><i class="sui-Markpencilcontrol"></i></button><form method="post" action="/admin/brands"><input type="hidden" name="csrf_token" value="{{$.CSRFToken}}"><input type="hidden" name="delete_id" value="{{.ID}}"><button type="button" onclick="window.confirmAction('确认删除', '确定要删除品牌「{{.Name}}」吗？', 'danger').then(function(ok){ if(ok) this.closest('form').submit(); }.bind(this))" aria-label="删除品牌"><i class="sui-Trashcancontrol"></i></button></form></div>
                         </div>
                         {{end}}
                     </div>

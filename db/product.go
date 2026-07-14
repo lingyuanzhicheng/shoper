@@ -153,7 +153,7 @@ func ReplaceProductImages(productID int64, payload string) error {
 			continue
 		}
 		if strings.HasPrefix(img, "data:") {
-			saved, err := utils.SaveImageDataURL(img)
+			saved, err := utils.SaveImageDataURL(img, "product")
 			if err != nil {
 				continue
 			}

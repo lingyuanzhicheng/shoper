@@ -208,6 +208,7 @@
     <div class="cat-modal voucher-modal-card" role="dialog" aria-modal="true" aria-label="添加凭证">
         <button type="button" class="cat-modal-close" onclick="closeVoucherModal()" aria-label="关闭">&times;</button>
         <form method="post" action="/admin/order/voucher/add?ajax=1" id="voucher-form" onsubmit="return submitVoucherForm(event)">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <input type="hidden" name="order_hash" value="{{.Order.Hash}}">
             <input type="hidden" name="vtype" id="voucher-type">
             <input type="hidden" name="image_url" id="voucher-image-url">
@@ -251,7 +252,7 @@
             <div class="settings-upload-preview" x-data="{url:''}" @click="$refs.f.click()">
                 <img x-show="url" :src="url">
                 <span x-show="!url" class="settings-upload-placeholder">点击上传图片</span>
-                <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>url=d.url)">
+                <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fd.append('csrf_token', getCookie('csrf_token')); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>url=d.url)">
             </div>
         </div>
         <div class="settings-field">
@@ -319,6 +320,7 @@
 {{if and .IsAdmin (eq .AdminView "categories")}}
 <div class="cat-modal-overlay" id="category-modal" aria-hidden="true">
     <form method="post" action="/admin/categories" class="cat-modal cat-modal-card" role="dialog" aria-modal="true" aria-label="添加分类">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <div class="cat-card-header">
             <div class="cat-card-title cat-card-title-input">
                 <input name="name" id="category-modal-name" class="cat-name-input" placeholder="输入分类名称" required>
@@ -345,6 +347,7 @@
     <form method="post" action="/admin/product/new" class="cat-modal product-modal-card" id="product-modal-form" role="dialog" aria-modal="true" aria-label="添加商品">
         <button type="button" class="cat-modal-close" onclick="closeProductModal()" aria-label="关闭">&times;</button>
         <div class="product-modal-grid product-modal-grid-v2">
+            <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
             <input type="hidden" name="slug" id="product-modal-slug">
             <input type="hidden" name="brand_logo" id="product-modal-brand-logo">
             <input type="hidden" name="images_payload" id="product-modal-images-payload">
@@ -392,6 +395,7 @@
 {{if and .IsAdmin (eq .AdminView "brands")}}
 <div class="cat-modal-overlay" id="brand-modal" aria-hidden="true">
     <form method="post" action="/admin/brands" class="cat-modal brand-modal-card" role="dialog" aria-modal="true" aria-label="添加品牌">
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
         <input type="hidden" name="id" id="brand-modal-id">
         <button type="button" class="cat-modal-close" onclick="closeBrandModal()" aria-label="关闭">&times;</button>
         <div class="brand-modal-grid">
@@ -492,6 +496,7 @@ window.confirmTicketQRCrop = function() {
     var blob = new Blob([ab], { type: 'image/jpeg' });
     var fd = new FormData();
     fd.append('file', blob, ticketQRCrop.fileName || 'ticket-qr.jpg');
+    fd.append('csrf_token', getCookie('csrf_token'));
     fetch('/upload', { method: 'POST', body: fd }).then(function(r) { return r.json(); }).then(function(d) {
         document.getElementById('ticket-qrcode').value = d.url;
         var img = document.getElementById('ticket-qrcode-img');
@@ -574,6 +579,10 @@ window.addEventListener('DOMContentLoaded', window.renderMarkdown);
 </script>
 <script defer src="/static/simplemde.min.js"></script>
 <script>
+window.getCookie = function(name) {
+  var m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return m ? m.pop() : '';
+};
 window.showToast = function(type, message, duration) {
   duration = duration || 3500;
   var container = document.getElementById('toast-container');
@@ -750,6 +759,7 @@ window.saveCustomerInfo = function() {
     var el = document.querySelector('[name="' + name + '"]');
     if(el) fd.append(name, el.value);
   });
+  fd.append('csrf_token', getCookie('csrf_token'));
   var hash = location.pathname.split('/').pop();
   fetch('/admin/order/customer/update/' + hash + '?ajax=1', {method:'POST', body:fd}).then(function(r){ return r.json(); }).then(function(d) {
     showToast(d.ok ? 'success' : 'error', d.ok ? '客户信息已保存' : (d.error || '保存失败'));
@@ -760,6 +770,7 @@ window.updateOrderStatus = function(status) {
   var hash = location.pathname.split('/').pop();
   var fd = new FormData();
   fd.append('status', status);
+  fd.append('csrf_token', getCookie('csrf_token'));
   fetch('/admin/order/status/update/' + hash + '?ajax=1', {method:'POST', body:fd})
     .then(function(r){ return r.json(); })
     .then(function(d) {
@@ -1349,6 +1360,7 @@ window.uploadVoucherImage = function(input) {
   if(!input.files || !input.files[0]) return;
   var fd = new FormData();
   fd.append('file', input.files[0]);
+  fd.append('csrf_token', getCookie('csrf_token'));
   fetch('/upload', {method:'POST', body:fd}).then(function(r){ return r.json(); }).then(function(d) {
     document.getElementById('voucher-image-url').value = d.url;
     var img = document.getElementById('voucher-image-img');

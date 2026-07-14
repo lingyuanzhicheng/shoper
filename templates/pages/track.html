@@ -123,7 +123,7 @@
                                     {{$order := .Order}}
                                     {{range $order.Vouchers}}{{if eq .Type "voucher"}}
                                     <div class="product-card admin-product-card group">
-                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}}?hash={{$.Order.Hash}}&phone={{$.Order.Phone}})"></div></div>
                                         <div class="product-info text-sm">
                                             <div class="media-card-hash">{{.Description}}</div>
                                             <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
@@ -137,7 +137,7 @@
                                     {{$order := .Order}}
                                     {{range $order.Vouchers}}{{if eq .Type "delivery"}}
                                     <div class="product-card admin-product-card group">
-                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}}?hash={{$.Order.Hash}}&phone={{$.Order.Phone}})"></div></div>
                                         <div class="product-info text-sm">
                                             <div class="media-card-hash">{{.Description}}</div>
                                             <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
@@ -151,7 +151,7 @@
                                     {{$order := .Order}}
                                     {{range $order.Vouchers}}{{if eq .Type "return"}}
                                     <div class="product-card admin-product-card group">
-                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}}?hash={{$.Order.Hash}}&phone={{$.Order.Phone}})"></div></div>
                                         <div class="product-info text-sm">
                                             <div class="media-card-hash">{{.Description}}</div>
                                             <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span><span style="display:block;font-size:0.8125rem">{{formatTime .CreatedAt}}</span></span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>
@@ -165,7 +165,7 @@
                                     {{$order := .Order}}
                                     {{range $order.Vouchers}}{{if eq .Type "statement"}}
                                     <div class="product-card admin-product-card group">
-                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}})"></div></div>
+                                        <div class="media media-4x3"><div class="media-content rounded" style="background-image:url({{.ImageURL}}?hash={{$.Order.Hash}}&phone={{$.Order.Phone}})"></div></div>
                                         <div class="product-info text-sm">
                                             <div class="media-card-hash">{{.Description}}</div>
                                             <div class="admin-product-actions" style="margin-top:4px"><span class="media-card-type" style="white-space:normal"><span style="display:block;font-size:0.8125rem">{{formatDate .CreatedAt}}</span>{{if .IsRefund}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">-¥{{formatPrice .AmountCents}}</span>{{else}}<span style="display:block;color:#dc2626;font-size:0.9375rem;font-weight:800">¥{{formatPrice .AmountCents}}</span>{{end}}</span><span style="display:inline-flex;gap:4px;flex-shrink:0"><button type="button" class="media-action-btn" onclick="navigator.clipboard.writeText(location.origin+'/track?hash={{$order.Hash}}');showToast('success','分享链接已复制')" title="复制分享链接"><i class="sui-lianjie"></i></button></span></div>

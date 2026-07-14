@@ -83,16 +83,16 @@ func cartTicketExportHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	order := models.Order{
-		Hash:         "CART-" + time.Now().Format("0102150405"),
-		ContactName:  "（待提交）",
-		Phone:        "（待提交）",
-		Address:      "（待提交）",
-		TotalCents:   total,
+		Hash:          "CART-" + time.Now().Format("0102150405"),
+		ContactName:   "（待提交）",
+		Phone:         "（待提交）",
+		Address:       "（待提交）",
+		TotalCents:    total,
 		DiscountCents: 0,
-		PaidCents:    0,
-		Status:       "待确认",
-		CreatedAt:    time.Now().Format("2006-01-02 15:04"),
-		Items:        items,
+		PaidCents:     0,
+		Status:        "待确认",
+		CreatedAt:     time.Now().Format("2006-01-02 15:04"),
+		Items:         items,
 	}
 	pn := db.GetSetting("platform_name")
 	if pn == "" {

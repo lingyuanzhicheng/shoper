@@ -11,6 +11,7 @@ import (
 	"shoper/db"
 	"shoper/middleware"
 	"shoper/models"
+	"shoper/utils"
 )
 
 func adminProductsHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +62,10 @@ func adminProductsHandler(w http.ResponseWriter, r *http.Request) {
 func adminProductNewHandler(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAdmin(r) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
 		return
 	}
 	if r.Method == http.MethodPost {
@@ -114,6 +119,10 @@ func adminProductNewHandler(w http.ResponseWriter, r *http.Request) {
 func adminProductEditHandler(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAdmin(r) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
 		return
 	}
 	idStr := strings.TrimPrefix(r.URL.Path, "/admin/product/")
@@ -205,10 +214,13 @@ func parseProductModels(r *http.Request) []models.ProductModel {
 		if name == "" {
 			continue
 		}
-		price, _ := strconv.ParseFloat(item.PriceYuan, 64)
+		priceCents, err := utils.ParseYuanToCents(item.PriceYuan)
+		if err != nil {
+			continue
+		}
 		ms = append(ms, models.ProductModel{
 			ModelName:  name,
-			PriceCents: int64(price * 100),
+			PriceCents: priceCents,
 			Unit:       strings.TrimSpace(item.Unit),
 		})
 	}

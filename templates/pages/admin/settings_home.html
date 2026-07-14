@@ -11,6 +11,7 @@
                                     <p class="settings-card-desc">第一行左右两张展示图，可配置跳转链接与配文</p>
                                 </div>
                                 <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                                     <input type="hidden" name="section" value="hero">
                                     <input type="hidden" name="home_hero_left_img" id="hero-left-img" value="{{.HomeSettings.HeroLeftImg}}">
                                     <input type="hidden" name="home_hero_left_link" id="hero-left-link" value="{{.HomeSettings.HeroLeftLink}}">
@@ -28,7 +29,7 @@
                                 <div class="settings-upload-preview" x-data="{url:'{{.HomeSettings.HeroLeftImg}}'}" @click="$refs.f.click()">
                                     <img x-show="url" :src="url">
                                     <span x-show="!url" class="settings-upload-placeholder">点击上传图片</span>
-                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-left-img').value=d.url})">
+                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fd.append('csrf_token', getCookie('csrf_token')); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-left-img').value=d.url})">
                                 </div>
                                 <input value="{{.HomeSettings.HeroLeftText}}" placeholder="配文（如 精选空间材料）" oninput="document.getElementById('hero-left-text').value=this.value">
                                 <input value="{{.HomeSettings.HeroLeftLink}}" placeholder="跳转链接（留空不跳转）" oninput="document.getElementById('hero-left-link').value=this.value">
@@ -38,7 +39,7 @@
                                 <div class="settings-upload-preview" x-data="{url:'{{.HomeSettings.HeroRightImg}}'}" @click="$refs.f.click()">
                                     <img x-show="url" :src="url">
                                     <span x-show="!url" class="settings-upload-placeholder">点击上传图片</span>
-                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-right-img').value=d.url})">
+                                    <input type="file" accept="image/*" x-ref="f" class="hidden" @change="const fd=new FormData(); fd.append('file',$event.target.files[0]); fd.append('csrf_token', getCookie('csrf_token')); fetch('/upload',{method:'POST',body:fd}).then(r=>r.json()).then(d=>{url=d.url; document.getElementById('hero-right-img').value=d.url})">
                                 </div>
                                 <input value="{{.HomeSettings.HeroRightText}}" placeholder="配文（如 灯光系统）" oninput="document.getElementById('hero-right-text').value=this.value">
                                 <input value="{{.HomeSettings.HeroRightLink}}" placeholder="跳转链接（留空不跳转）" oninput="document.getElementById('hero-right-link').value=this.value">
@@ -59,6 +60,7 @@
                                     <p class="settings-card-desc">第二行左右两个轮播，点击添加弹窗选择图片+文本+链接</p>
                                 </div>
                                 <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                                     <input type="hidden" name="section" value="carousel">
                                     <input type="hidden" name="home_carousel1" :value="JSON.stringify(carousel1)">
                                     <input type="hidden" name="home_carousel2" :value="JSON.stringify(carousel2)">
@@ -104,6 +106,7 @@
                                     <p class="settings-card-desc">首页展示的推荐商品，点击添加从已有商品中选择</p>
                                 </div>
                                 <form method="post" action="/admin/settings/home" class="settings-inline-save">
+                                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                                     <input type="hidden" name="section" value="recommend">
                                     <input type="hidden" name="home_recommend_ids" id="home-recommend-ids" value="{{json .HomeSettings.RecommendIDs}}">
                                     <button type="submit" class="btn btn-primary btn-sm">保存设置</button>

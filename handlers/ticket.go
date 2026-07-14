@@ -23,7 +23,7 @@ import (
 
 // ticketFontBytes 为正文字体（NotoSansSC），ticketBrandFontBytes 为平台名称字体（Ma Shan Zheng）。
 var (
-	ticketFontBytes     []byte
+	ticketFontBytes      []byte
 	ticketBrandFontBytes []byte
 )
 
@@ -333,15 +333,15 @@ func RenderTicket(order models.Order, ts models.TicketSettings, platformName, tr
 	// 列宽按比例：序号0.75、品名及型号4、单位1、数量1、单价1.25、金额2.25、备注2.75
 	// 总比例 13，表格宽度 881，1单位≈67.8px
 	const (
-		W = 1000
-		ml = 60              // 左边距（外边框20 + 内边距40），右侧对称
-		colB = ml
-		colC = colB + 51    // 序号 0.75
-		colD = colC + 271   // 货号及品名 4
-		colE = colD + 68    // 单位 1
-		colF = colE + 68    // 数量 1
-		colG = colF + 85    // 单价 1.25
-		colH = colG + 152   // 金额 2.25
+		W         = 1000
+		ml        = 60 // 左边距（外边框20 + 内边距40），右侧对称
+		colB      = ml
+		colC      = colB + 51  // 序号 0.75
+		colD      = colC + 271 // 货号及品名 4
+		colE      = colD + 68  // 单位 1
+		colF      = colE + 68  // 数量 1
+		colG      = colF + 85  // 单价 1.25
+		colH      = colG + 152 // 金额 2.25
 		rightEdge = colH + 186 // 备注 2.75，= 941，右边距 = 980-941 = 39 ≈ 左边距
 	)
 	// 计算高度（动态商品行）

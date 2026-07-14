@@ -2,6 +2,7 @@
                 <div class="admin-shell">
                     <div class="page-header"><div><h2 class="page-header-title">票据设置</h2><p class="page-header-desc">配置订单票据单上部分预设信息。</p></div></div>
                     <form method="post" action="/admin/settings/ticket">
+                    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                     <section class="business-card settings-card">
                         <div class="settings-card-header">
                             <div class="settings-card-title-row">

@@ -2,6 +2,8 @@ package db
 
 import (
 	"database/sql"
+	"os"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -15,6 +17,20 @@ func InitDB(database *sql.DB) error {
 		return err
 	}
 	migrateProductModels()
+	migrateUploads()
+	// 迁移 admin_phone/admin_key → admin_username/admin_password（幂等）
+	if v := GetSetting("admin_phone"); v != "" {
+		if GetSetting("admin_username") == "" {
+			SetSetting("admin_username", v)
+		}
+		_, _ = DB.Exec(`DELETE FROM settings WHERE key = ?`, "admin_phone")
+	}
+	if v := GetSetting("admin_key"); v != "" {
+		if GetSetting("admin_password") == "" {
+			SetSetting("admin_password", v)
+		}
+		_, _ = DB.Exec(`DELETE FROM settings WHERE key = ?`, "admin_key")
+	}
 	return nil
 }
 
@@ -195,4 +211,111 @@ func migrateProductModels() {
 
 	_, _ = DB.Exec("ALTER TABLE products DROP COLUMN price_cents")
 	_, _ = DB.Exec("ALTER TABLE products DROP COLUMN unit")
+}
+
+// migrateUploads 将 uploads/ 根目录下的历史文件按 DB 引用迁移到对应子目录。
+// 已位于子目录的文件跳过；目标已存在时跳过；迁移幂等可重复执行。
+func migrateUploads() {
+	// 确保子目录存在
+	for _, sub := range []string{"product", "brand", "voucher", "extra"} {
+		_ = os.MkdirAll(filepath.Join("uploads", sub), 0755)
+	}
+
+	// 收集 DB 引用：basename -> 目标子目录
+	type ref struct {
+		basename string
+		subdir   string
+		urlCol   string // 用于更新 DB 的完整 URL 前缀
+	}
+	refs := []ref{}
+
+	// product_images
+	rows, err := DB.Query(`SELECT image_url FROM product_images`)
+	if err == nil {
+		for rows.Next() {
+			var u string
+			rows.Scan(&u)
+			base := filepath.Base(u)
+			if base != "" && base != "." && !strings.Contains(u, "/product/") {
+				refs = append(refs, ref{basename: base, subdir: "product", urlCol: "/uploads/product/" + base})
+			}
+		}
+		rows.Close()
+	}
+
+	// brands
+	brows, err := DB.Query(`SELECT logo FROM brands WHERE logo != ''`)
+	if err == nil {
+		for brows.Next() {
+			var u string
+			brows.Scan(&u)
+			base := filepath.Base(u)
+			if base != "" && base != "." && !strings.Contains(u, "/brand/") {
+				refs = append(refs, ref{basename: base, subdir: "brand", urlCol: "/uploads/brand/" + base})
+			}
+		}
+		brows.Close()
+	}
+
+	// order_vouchers
+	vrows, err := DB.Query(`SELECT image_url FROM order_vouchers WHERE image_url != ''`)
+	if err == nil {
+		for vrows.Next() {
+			var u string
+			vrows.Scan(&u)
+			base := filepath.Base(u)
+			if base != "" && base != "." && !strings.Contains(u, "/voucher/") {
+				refs = append(refs, ref{basename: base, subdir: "voucher", urlCol: "/uploads/voucher/" + base})
+			}
+		}
+		vrows.Close()
+	}
+
+	// 扫描 uploads/ 根目录文件
+	entries, err := os.ReadDir("uploads")
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		filename := entry.Name()
+		// 查找该文件对应的 DB 引用
+		matched := false
+		for _, r := range refs {
+			if r.basename == filename {
+				src := filepath.Join("uploads", filename)
+				dst := filepath.Join("uploads", r.subdir, filename)
+				// 若目标已存在则跳过文件移动，但仍尝试更新 DB
+				if _, err := os.Stat(dst); os.IsNotExist(err) {
+					if err := os.Rename(src, dst); err != nil {
+						continue
+					}
+				}
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			// 无 DB 引用的归到 extra
+			src := filepath.Join("uploads", filename)
+			dst := filepath.Join("uploads", "extra", filename)
+			if _, err := os.Stat(dst); os.IsNotExist(err) {
+				os.Rename(src, dst)
+			}
+		}
+	}
+
+	// 更新 DB 中的 image_url 字段
+	for _, r := range refs {
+		switch r.subdir {
+		case "product":
+			DB.Exec(`UPDATE product_images SET image_url = ? WHERE image_url = ?`, r.urlCol, "/uploads/"+r.basename)
+		case "brand":
+			DB.Exec(`UPDATE brands SET logo = ? WHERE logo = ?`, r.urlCol, "/uploads/"+r.basename)
+		case "voucher":
+			DB.Exec(`UPDATE order_vouchers SET image_url = ? WHERE image_url = ?`, r.urlCol, "/uploads/"+r.basename)
+		}
+	}
 }

@@ -14,6 +14,10 @@ func adminSettingsAccountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	pn := db.GetSetting("platform_name")
 	if pn == "" {
 		pn = "Shoper"
@@ -21,38 +25,42 @@ func adminSettingsAccountHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		platformName := strings.TrimSpace(r.FormValue("platform_name"))
 		platformSubtitle := strings.TrimSpace(r.FormValue("platform_subtitle"))
-		newPhone := strings.TrimSpace(r.FormValue("admin_phone"))
-		newKey := strings.TrimSpace(r.FormValue("admin_key"))
+		newUsername := strings.TrimSpace(r.FormValue("admin_username"))
+		newPassword := strings.TrimSpace(r.FormValue("admin_password"))
 		if platformName != "" {
 			db.SetSetting("platform_name", platformName)
 		}
 		if platformSubtitle != "" {
 			db.SetSetting("platform_subtitle", platformSubtitle)
 		}
-		if newPhone != "" && newPhone != middleware.GetPhone() {
-			db.SetSetting("admin_phone", newPhone)
-			middleware.SetPhone(newPhone)
+		if newUsername != "" && newUsername != middleware.GetUsername() {
+			db.SetSetting("admin_username", newUsername)
+			middleware.SetUsername(newUsername)
 		}
-		if newKey != "" && newKey != middleware.GetSecret() {
-			db.SetSetting("admin_key", newKey)
-			middleware.SetSecret(newKey)
+		if newPassword != "" && newPassword != middleware.GetPassword() {
+			db.SetSetting("admin_password", newPassword)
+			middleware.SetPassword(newPassword)
 			middleware.SetAdminCookie(w)
 		}
 		http.Redirect(w, r, "/admin/settings/account", http.StatusSeeOther)
 		return
 	}
 	render(w, r, models.PageData{
-		View:         "admin",
-		AdminView:    "settings-account",
-		Title:        "账户密码 - " + pn,
-		PlatformName: pn,
-		SettingsKey:  middleware.GetSecret(),
+		View:             "admin",
+		AdminView:        "settings-account",
+		Title:            "账户密码 - " + pn,
+		PlatformName:     pn,
+		SettingsPassword: middleware.GetPassword(),
 	})
 }
 
 func adminSettingsHomeHandler(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAdmin(r) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
 		return
 	}
 	pn := db.GetSetting("platform_name")
@@ -111,6 +119,10 @@ func adminSettingsAboutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	pn := db.GetSetting("platform_name")
 	if pn == "" {
 		pn = "Shoper"
@@ -138,6 +150,10 @@ func adminSettingsTicketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
+		return
+	}
 	pn := db.GetSetting("platform_name")
 	if pn == "" {
 		pn = "Shoper"
@@ -163,6 +179,10 @@ func adminSettingsTicketHandler(w http.ResponseWriter, r *http.Request) {
 func adminSettingsFeatureHandler(w http.ResponseWriter, r *http.Request) {
 	if !middleware.IsAdmin(r) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if r.Method == http.MethodPost && !middleware.ValidateCSRF(r) {
+		http.Error(w, "csrf token invalid", http.StatusForbidden)
 		return
 	}
 	if r.Method == http.MethodPost {

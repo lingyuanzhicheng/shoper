@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
+	"time"
 
 	"shoper/db"
 	"shoper/handlers"
@@ -32,12 +36,12 @@ var ticketFontFS embed.FS
 var faviconFS embed.FS
 
 func main() {
-	envPhone := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_PHONE"))
-	envKey := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_KEY"))
-	if envPhone == "" || envKey == "" {
-		envPhone = utils.FirstNonEmpty(envPhone, "shoper")
-		envKey = utils.FirstNonEmpty(envKey, "shoper")
-		log.Println("SHOPER_ADMIN_PHONE or SHOPER_ADMIN_KEY is not set; using local development credentials")
+	envUsername := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_USERNAME"))
+	envPassword := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_PASSWORD"))
+	if envUsername == "" || envPassword == "" {
+		envUsername = utils.FirstNonEmpty(envUsername, "shoper")
+		envPassword = utils.FirstNonEmpty(envPassword, "shoper")
+		log.Println("SHOPER_ADMIN_USERNAME or SHOPER_ADMIN_PASSWORD is not set; using local development credentials")
 	}
 
 	t, err := template.New("shop.html").Funcs(handlers.TemplateFuncs()).ParseFS(templateFS,
@@ -65,18 +69,18 @@ func main() {
 	}
 
 	// 先用环境变量/默认值初始化凭据
-	middleware.SetCredentials(envPhone, envKey)
+	middleware.SetCredentials(envUsername, envPassword)
 
 	// 如果数据库已有凭据，则用数据库的覆盖
-	if v := db.GetSetting("admin_phone"); v != "" {
-		middleware.SetPhone(v)
+	if v := db.GetSetting("admin_username"); v != "" {
+		middleware.SetUsername(v)
 	} else {
-		db.SetSetting("admin_phone", envPhone)
+		db.SetSetting("admin_username", envUsername)
 	}
-	if v := db.GetSetting("admin_key"); v != "" {
-		middleware.SetSecret(v)
+	if v := db.GetSetting("admin_password"); v != "" {
+		middleware.SetPassword(v)
 	} else {
-		db.SetSetting("admin_key", envKey)
+		db.SetSetting("admin_password", envPassword)
 	}
 	if db.GetSetting("platform_name") == "" {
 		db.SetSetting("platform_name", "Shoper")
@@ -98,7 +102,9 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+	mux.Handle("/uploads/product/", http.StripPrefix("/uploads/product/", http.FileServer(http.Dir("uploads/product"))))
+	mux.Handle("/uploads/brand/", http.StripPrefix("/uploads/brand/", http.FileServer(http.Dir("uploads/brand"))))
+	mux.Handle("/uploads/extra/", http.StripPrefix("/uploads/extra/", http.FileServer(http.Dir("uploads/extra"))))
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/x-icon")
 		data, _ := faviconFS.ReadFile("assets/favicon.ico")
@@ -106,6 +112,28 @@ func main() {
 	})
 	handlers.RegisterRoutes(mux)
 
-	log.Println("Shoper listening on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	srv := &http.Server{Addr: ":8080", Handler: mux}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		log.Println("Shoper listening on http://localhost:8080")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen error: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+	log.Println("Shoper shutting down...")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown error: %v", err)
+	}
+	if err := database.Close(); err != nil {
+		log.Printf("database close error: %v", err)
+	}
+	log.Println("Shoper stopped")
 }

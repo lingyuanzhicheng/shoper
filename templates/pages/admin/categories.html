@@ -13,6 +13,7 @@
                                     <span>{{.Name}}</span>
                                 </div>
                                 <form method="post" action="/admin/categories" class="inline">
+                                    <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                                     <input type="hidden" name="delete_id" value="{{.ID}}">
                                     <button type="button" onclick="window.confirmAction('确认删除', '删除分类「{{.Name}}」会解除所有关联商品的分类，确定要删除吗？', 'danger').then(function(ok){ if(ok) this.closest('form').submit(); }.bind(this))" class="cat-delete-btn" aria-label="删除分类" title="删除分类"><i class="sui-Trashcancontrol"></i></button>
                                 </form>
@@ -25,6 +26,7 @@
                                     <span class="tag-badge">
                                         {{.Name}}
                                         <form method="post" action="/admin/categories" class="inline" style="display:inline">
+                                            <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                                             <input type="hidden" name="delete_tag_id" value="{{.ID}}">
                                             <button type="button" onclick="window.confirmAction('确认删除', '确定要删除标签「{{.Name}}」吗？', 'danger').then(function(ok){ if(ok) this.closest('form').submit(); }.bind(this))" class="tag-remove-btn" aria-label="删除标签">&times;</button>
                                         </form>
@@ -33,6 +35,7 @@
                                     {{end}}
                                     <button type="button" class="tag-add-pill" x-show="!addingTag" @click="addingTag=true; $nextTick(function(){ $refs.tagInput.focus(); })">+ 添加标签</button>
                                     <form method="post" action="/admin/categories" class="tag-inline-form" x-show="addingTag" x-cloak>
+                                        <input type="hidden" name="csrf_token" value="{{$.CSRFToken}}">
                                         <input type="hidden" name="tag_category_id" value="{{.ID}}">
                                         <input name="tag_name" x-ref="tagInput" class="tag-inline-input" placeholder="输入标签" required>
                                         <button class="tag-inline-save" title="保存标签" aria-label="保存标签"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg></button>
