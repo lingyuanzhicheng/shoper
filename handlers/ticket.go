@@ -330,7 +330,7 @@ func (d *ticketDrawer) wrapText(s string, maxWidth int, face font.Face) []string
 // 无抹零/应付/备注/待付/结账方式/确认，仅保留合计行与说明。
 // 布局严格参照 shoper.xlsx 票据案例。
 func RenderTicket(order models.Order, ts models.TicketSettings, platformName, trackURL string, isQuote bool) ([]byte, error) {
-	// 列宽按比例：序号0.75、货号及品名4、单位1、数量1、单价1.25、金额2.25、备注2.75
+	// 列宽按比例：序号0.75、品名及型号4、单位1、数量1、单价1.25、金额2.25、备注2.75
 	// 总比例 13，表格宽度 881，1单位≈67.8px
 	const (
 		W = 1000
@@ -398,6 +398,9 @@ func RenderTicket(order models.Order, ts models.TicketSettings, platformName, tr
 
 	// 平台名称（Ma Shan Zheng 字体，加大）
 	brandX := qrX + qrSize + 20
+	if ts.QRCodeURL == "" {
+		brandX = qrX // 无二维码时，文本左移填补位置
+	}
 	// 联系方式底部与二维码底部平齐；平台名称与联系方式的间距=订单票据单与单号的间距(36px)
 	qrBottom := qrY + qrSize
 	contactY := qrBottom - 3 // faceSmall(15px)基线，使文本底部≈二维码底部
@@ -470,7 +473,7 @@ func RenderTicket(order models.Order, ts models.TicketSettings, platformName, tr
 		cx    int
 	}{
 		{"序号", (colB + colC) / 2},
-		{"货号及品名", (colC + colD) / 2},
+		{"品名及型号", (colC + colD) / 2},
 		{"单位", (colD + colE) / 2},
 		{"数量", (colE + colF) / 2},
 		{"单价", (colF + colG) / 2},
@@ -496,7 +499,7 @@ func RenderTicket(order models.Order, ts models.TicketSettings, platformName, tr
 		rowBottom := rowY + rowH
 		// 序号
 		d.textCenter(fmt.Sprintf("%d", i+1), (colB+colC)/2, rowY+32, d.black, d.face)
-		// 货号及品名
+		// 品名及型号
 		d.text(item.ProductName, colC+8, rowY+32, d.black, d.face)
 		// 单位
 		d.textCenter(item.Unit, (colD+colE)/2, rowY+32, d.black, d.face)

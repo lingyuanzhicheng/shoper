@@ -8,8 +8,8 @@
                 {{if and (gt .CategoryID 0) .Tags}}
                 <div class="filter-bar">
                     <span class="filter-label">标签</span>
-                    <a href="/products{{if gt .CategoryID 0}}?cat={{.CategoryID}}{{end}}" class="filter-chip {{if eq .TagID 0}}active{{end}}">全部</a>
-                    {{range .Tags}}<a href="/products?cat={{$.CategoryID}}&amp;tag={{.ID}}" class="filter-chip {{if eq $.TagID .ID}}active{{end}}">{{.Name}}</a>{{end}}
+                    <button type="button" class="filter-chip {{if not $.TagIDs}}active{{end}}" onclick="clearTagFilter()">全部</button>
+                    {{range .Tags}}<button type="button" class="filter-chip {{if index $.TagIDs .ID}}active{{end}}" onclick="toggleTagFilter({{.ID}})">{{.Name}}</button>{{end}}
                 </div>
                 {{end}}
                 <div class="shop-product-grid pb-8">
@@ -18,7 +18,7 @@
                         <div class="media media-4x3"><a href="/product/{{.Slug}}" class="media-content rounded" style="background-image:url({{index .Images 0}})" title="{{.Name}}"></a></div>
                         <div class="product-info text-sm">
                             <a href="/product/{{.Slug}}" class="product-title line-clamp-2">{{.Name}}</a>
-                            <div class="mt-3 flex items-center justify-between"><div class="flex items-center break-all"><img src="{{.BrandLogo}}" class="object-cover size-5 rounded-full mr-1" alt="{{.Brand}}"><span class="text-xs text-gray-500">{{.Brand}}</span></div><div class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}</span><span class="text-gray-400"> / {{.Unit}}</span></div></div>
+                            <div class="mt-3 flex items-center justify-between"><div class="flex items-center break-all"><img src="{{.BrandLogo}}" class="object-cover size-5 rounded-full mr-1" alt="{{.Brand}}"><span class="text-xs text-gray-500">{{.Brand}}</span></div><div class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}+</span><span class="text-gray-400"> / {{.Unit}}</span></div></div>
                         </div>
                     </div>
                     {{end}}

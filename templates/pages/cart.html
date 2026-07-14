@@ -8,12 +8,12 @@
                         <div class="cart-row">
                             <img src="{{index .Product.Images 0}}" class="cart-row-image" alt="{{.Product.Name}}">
                             <div class="cart-row-body">
-                                <a class="cart-row-title" href="/product/{{.Product.Slug}}">{{.Product.Name}}</a>
+                                <a class="cart-row-title" href="/product/{{.Product.Slug}}">{{.Product.Name}}{{if .ModelName}} ({{.ModelName}}){{end}}</a>
                                 <div class="cart-row-meta">{{.Product.Brand}} · ¥{{price .Product.PriceCents}} / {{.Product.Unit}}</div>
                             </div>
-                            <form method="post" action="/cart/update" class="cart-qty-form"><input type="hidden" name="product_id" value="{{.Product.ID}}"><input name="qty" type="text" inputmode="numeric" pattern="[0-9]*" value="{{.Qty}}" onchange="this.form.submit()"></form>
+                            <form method="post" action="/cart/update" class="cart-qty-form"><input type="hidden" name="product_id" value="{{.Product.ID}}"><input type="hidden" name="model_id" value="{{.ModelID}}"><input name="qty" type="text" inputmode="numeric" pattern="[0-9]*" value="{{.Qty}}" onchange="this.form.submit()"></form>
                             <div class="cart-row-price">¥{{price .SubCents}}</div>
-                            <form method="post" action="/cart/remove" class="cart-row-action"><input type="hidden" name="product_id" value="{{.Product.ID}}"><button aria-label="移除"><i class="sui-Trashcancontrol"></i></button></form>
+                            <form method="post" action="/cart/remove" class="cart-row-action"><input type="hidden" name="product_id" value="{{.Product.ID}}"><input type="hidden" name="model_id" value="{{.ModelID}}"><button aria-label="移除"><i class="sui-Trashcancontrol"></i></button></form>
                         </div>
                         {{end}}
                     </div>

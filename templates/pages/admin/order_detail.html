@@ -65,7 +65,7 @@
                                         </div>
                                     </div>
                                     <div class="order-detail-submit">
-                                        <button type="submit" class="btn btn-primary">确认订单金额</button>
+                                        <button type="button" class="btn btn-primary" onclick="submitOrderAmount()">确认订单金额</button>
                                     </div>
                                 </section>
 
@@ -110,13 +110,12 @@
                                         <input type="hidden" name="item_id" value="{{.ID}}"><input type="hidden" name="item_product_id" value="{{.ProductID}}"><input type="hidden" name="item_sort" value="0"><input type="hidden" name="delivered_item" value="{{if .Delivered}}{{.ID}}{{end}}"><input type="hidden" name="return_item" value="{{if .IsReturn}}{{.ID}}{{end}}">
                                         {{if .Image}}<img src="{{.Image}}" class="cart-row-image" alt="{{.ProductName}}">{{else}}<div class="cart-row-image order-row-image-empty"><i class="sui-Image"></i></div>{{end}}
                                         <div class="order-info-cell">
-                                        <div class="cart-row-body">
-                                            <div class="cart-row-title">{{.ProductName}}</div>
-                                            <input type="hidden" name="item_name" value="{{.ProductName}}">
-                                            <input type="hidden" name="item_brand" value="{{.Brand}}">
-                                            <div class="cart-row-meta">{{.Brand}}</div>
+                                        <textarea name="item_name" class="order-item-input order-item-name" rows="1">{{.ProductName}}</textarea>
+                                        <div class="order-item-meta-row">
+                                            <input name="item_brand" class="order-item-input order-item-brand" value="{{.Brand}}">
+                                            <input name="item_price" class="order-item-input order-item-price" value="{{price .PriceCents}}" oninput="recalcOrderDetail()">
+                                            <input name="item_unit" class="order-item-input order-item-unit" value="{{.Unit}}">
                                         </div>
-                                        <span class="order-price-unit-edit"><input name="item_price" class="order-item-input order-item-price" value="{{price .PriceCents}}" oninput="recalcOrderDetail()"><input name="item_unit" class="order-item-input order-item-unit" value="{{.Unit}}"></span>
                                         </div>
                                         <div class="cart-qty-form"><input name="item_qty" class="order-item-input order-item-qty" value="{{.Qty}}" oninput="recalcOrderDetail()"></div>
                                         <div class="cart-row-price order-line-total">¥{{price .LineCents}}</div>

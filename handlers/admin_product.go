@@ -20,6 +20,20 @@ func adminProductsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	catID, _ := strconv.ParseInt(r.URL.Query().Get("cat"), 10, 64)
 	tagID, _ := strconv.ParseInt(r.URL.Query().Get("tag"), 10, 64)
+	tagStrs := r.URL.Query()["tags"]
+	var tagIDs []int64
+	tagIDMap := map[int64]bool{}
+	for _, s := range tagStrs {
+		id, err := strconv.ParseInt(s, 10, 64)
+		if err == nil && id > 0 {
+			tagIDs = append(tagIDs, id)
+			tagIDMap[id] = true
+		}
+	}
+	if tagID > 0 && len(tagIDs) == 0 {
+		tagIDs = []int64{tagID}
+		tagIDMap[tagID] = true
+	}
 	group := ""
 	catName := ""
 	var tags []models.Tag
@@ -31,7 +45,7 @@ func adminProductsHandler(w http.ResponseWriter, r *http.Request) {
 		tags, _ = db.GetTagsByCategory(catID)
 	}
 	page, size := parsePage(r)
-	products, total, err := db.ListProductsPaged("", group, "", page, size)
+	products, total, err := db.ListProductsPaged("", group, "", tagIDs, page, size)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -41,7 +55,7 @@ func adminProductsHandler(w http.ResponseWriter, r *http.Request) {
 		cats[i].Tags, _ = db.GetTagsByCategory(cats[i].ID)
 	}
 	brands, _ := db.GetAllBrands()
-	render(w, r, models.PageData{View: "admin", AdminView: "products", Title: "商品管理 - Shoper", AllProducts: products, AllCategories: cats, AllBrands: brands, CategoryID: catID, CategoryName: catName, Tags: tags, TagID: tagID, Pagination: buildPagination("/admin/products", filterQuery(r), page, size, total)})
+	render(w, r, models.PageData{View: "admin", AdminView: "products", Title: "商品管理 - Shoper", AllProducts: products, AllCategories: cats, AllBrands: brands, CategoryID: catID, CategoryName: catName, Tags: tags, TagID: tagID, TagIDs: tagIDMap, Pagination: buildPagination("/admin/products", filterQuery(r), page, size, total)})
 }
 
 func adminProductNewHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,30 +68,28 @@ func adminProductNewHandler(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimSpace(r.FormValue("name"))
 		brand := strings.TrimSpace(r.FormValue("brand"))
 		brandLogo := strings.TrimSpace(r.FormValue("brand_logo"))
-		unit := strings.TrimSpace(r.FormValue("unit"))
-		priceYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("price")), 64)
 		desc := strings.TrimSpace(r.FormValue("description"))
 		body := strings.TrimSpace(r.FormValue("body"))
 		catID, _ := strconv.ParseInt(r.FormValue("category_id"), 10, 64)
+		models := parseProductModels(r)
 		if slug == "" {
 			slug = fmt.Sprintf("p-%d", time.Now().UnixNano())
 		}
-		if name == "" || brand == "" || unit == "" || priceYuan <= 0 {
-			cats, _ := db.GetAllCategories()
-			render(w, r, models.PageData{View: "admin", AdminView: "product-edit", Title: "新建商品 - Shoper", AllCategories: cats, Message: "请填写必填字段（名称、品牌、单位、价格）", MessageType: "error"})
+		if name == "" || brand == "" {
+			http.Redirect(w, r, "/admin/products", http.StatusSeeOther)
 			return
 		}
-		res, err := db.DB.Exec(`INSERT INTO products (slug, group_name, name, brand, brand_logo, unit, price_cents, description, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			slug, "", name, brand, brandLogo, unit, int64(priceYuan*100), desc, body)
+		res, err := db.DB.Exec(`INSERT INTO products (slug, group_name, name, brand, brand_logo, description, body) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			slug, "", name, brand, brandLogo, desc, body)
 		if err != nil {
-			cats, _ := db.GetAllCategories()
-			render(w, r, models.PageData{View: "admin", AdminView: "product-edit", Title: "新建商品 - Shoper", AllCategories: cats, Message: "创建失败：" + err.Error(), MessageType: "error"})
+			http.Redirect(w, r, "/admin/products", http.StatusSeeOther)
 			return
 		}
 		pid, _ := res.LastInsertId()
 		if catID > 0 {
 			db.DB.Exec(`UPDATE products SET group_name = (SELECT name FROM categories WHERE id = ?) WHERE id = ?`, catID, pid)
 		}
+		db.ReplaceProductModels(pid, models)
 		_ = db.ReplaceProductImages(pid, r.FormValue("images_payload"))
 		var tagIDs []int64
 		for _, idStr := range r.Form["tag_ids"] {
@@ -123,16 +135,16 @@ func adminProductEditHandler(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimSpace(r.FormValue("name"))
 		brand := strings.TrimSpace(r.FormValue("brand"))
 		brandLogo := strings.TrimSpace(r.FormValue("brand_logo"))
-		unit := strings.TrimSpace(r.FormValue("unit"))
-		priceYuan, _ := strconv.ParseFloat(strings.TrimSpace(r.FormValue("price")), 64)
 		desc := strings.TrimSpace(r.FormValue("description"))
 		body := strings.TrimSpace(r.FormValue("body"))
 		catID, _ := strconv.ParseInt(r.FormValue("category_id"), 10, 64)
-		_, _ = db.DB.Exec(`UPDATE products SET slug=?, name=?, brand=?, brand_logo=?, unit=?, price_cents=?, description=?, body=? WHERE id=?`,
-			slug, name, brand, brandLogo, unit, int64(priceYuan*100), desc, body, id)
+		models := parseProductModels(r)
+		_, _ = db.DB.Exec(`UPDATE products SET slug=?, name=?, brand=?, brand_logo=?, description=?, body=? WHERE id=?`,
+			slug, name, brand, brandLogo, desc, body, id)
 		if catID > 0 {
 			db.DB.Exec(`UPDATE products SET group_name = (SELECT name FROM categories WHERE id = ?) WHERE id = ?`, catID, id)
 		}
+		db.ReplaceProductModels(id, models)
 		_ = db.ReplaceProductImages(id, r.FormValue("images_payload"))
 
 		imgOrder := strings.TrimSpace(r.FormValue("img_order"))
@@ -172,6 +184,35 @@ func adminProductEditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	cats, _ := db.GetAllCategories()
 	render(w, r, models.PageData{View: "admin", AdminView: "product-edit", Title: "编辑商品 - Shoper", EditProduct: product, AllCategories: cats})
+}
+
+func parseProductModels(r *http.Request) []models.ProductModel {
+	jsonStr := strings.TrimSpace(r.FormValue("models_json"))
+	if jsonStr == "" {
+		return nil
+	}
+	var items []struct {
+		Name      string `json:"name"`
+		PriceYuan string `json:"price"`
+		Unit      string `json:"unit"`
+	}
+	if err := json.Unmarshal([]byte(jsonStr), &items); err != nil {
+		return nil
+	}
+	var ms []models.ProductModel
+	for _, item := range items {
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			continue
+		}
+		price, _ := strconv.ParseFloat(item.PriceYuan, 64)
+		ms = append(ms, models.ProductModel{
+			ModelName:  name,
+			PriceCents: int64(price * 100),
+			Unit:       strings.TrimSpace(item.Unit),
+		})
+	}
+	return ms
 }
 
 func adminTagsByCategoryHandler(w http.ResponseWriter, r *http.Request) {

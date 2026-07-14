@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -10,7 +11,11 @@ var DB *sql.DB
 
 func InitDB(database *sql.DB) error {
 	DB = database
-	return initDB()
+	if err := initDB(); err != nil {
+		return err
+	}
+	migrateProductModels()
+	return nil
 }
 
 func initDB() error {
@@ -22,8 +27,6 @@ func initDB() error {
 			name TEXT NOT NULL,
 			brand TEXT NOT NULL,
 			brand_logo TEXT NOT NULL,
-			unit TEXT NOT NULL,
-			price_cents INTEGER NOT NULL,
 			description TEXT NOT NULL,
 			body TEXT NOT NULL DEFAULT ''
 		)`,
@@ -102,6 +105,14 @@ func initDB() error {
 			tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
 			PRIMARY KEY (product_id, tag_id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS product_models (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+			model_name TEXT NOT NULL DEFAULT '',
+			price_cents INTEGER NOT NULL DEFAULT 0,
+			unit TEXT NOT NULL DEFAULT '',
+			sort_order INTEGER NOT NULL DEFAULT 0
+		)`,
 	}
 	_, _ = DB.Exec(`ALTER TABLE orders ADD COLUMN contact_name TEXT NOT NULL DEFAULT ''`)
 	_, _ = DB.Exec(`ALTER TABLE orders ADD COLUMN discount_cents INTEGER NOT NULL DEFAULT 0`)
@@ -122,4 +133,66 @@ func initDB() error {
 	_, _ = DB.Exec(`ALTER TABLE orders ADD COLUMN paid_cents INTEGER NOT NULL DEFAULT 0`)
 	_, _ = DB.Exec(`ALTER TABLE products ADD COLUMN group_name TEXT NOT NULL DEFAULT '综合商品'`)
 	return nil
+}
+
+func columnExists(table, column string) bool {
+	var name string
+	err := DB.QueryRow("SELECT name FROM pragma_table_info(?) WHERE name = ?", table, column).Scan(&name)
+	return err == nil
+}
+
+// migrateProductModels 迁移旧的 price_cents/unit 到 product_models 表，
+// 从商品名的 () 中提取型号名称，清理商品名，然后删除旧字段。
+func migrateProductModels() {
+	if !columnExists("products", "price_cents") {
+		return
+	}
+
+	rows, err := DB.Query("SELECT id, name, price_cents, unit FROM products")
+	if err != nil {
+		return
+	}
+	type oldProd struct {
+		ID         int64
+		Name       string
+		PriceCents int64
+		Unit       string
+	}
+	var products []oldProd
+	for rows.Next() {
+		var p oldProd
+		if err := rows.Scan(&p.ID, &p.Name, &p.PriceCents, &p.Unit); err != nil {
+			continue
+		}
+		products = append(products, p)
+	}
+	rows.Close()
+
+	for _, p := range products {
+		modelName := ""
+		cleanName := p.Name
+		if idx := strings.Index(p.Name, "("); idx >= 0 {
+			if endIdx := strings.Index(p.Name[idx:], ")"); endIdx > 0 {
+				modelName = strings.TrimSpace(p.Name[idx+1 : idx+endIdx])
+				cleanName = strings.TrimSpace(p.Name[:idx]) + strings.TrimSpace(p.Name[idx+endIdx+1:])
+				cleanName = strings.TrimSpace(cleanName)
+			}
+		}
+		if modelName == "" {
+			modelName = "默认"
+		}
+
+		var count int
+		DB.QueryRow("SELECT COUNT(*) FROM product_models WHERE product_id = ?", p.ID).Scan(&count)
+		if count == 0 {
+			DB.Exec("INSERT INTO product_models (product_id, model_name, price_cents, unit, sort_order) VALUES (?, ?, ?, ?, 0)",
+				p.ID, modelName, p.PriceCents, p.Unit)
+		}
+		if cleanName != p.Name {
+			DB.Exec("UPDATE products SET name = ? WHERE id = ?", cleanName, p.ID)
+		}
+	}
+
+	_, _ = DB.Exec("ALTER TABLE products DROP COLUMN price_cents")
+	_, _ = DB.Exec("ALTER TABLE products DROP COLUMN unit")
 }

@@ -69,8 +69,12 @@ func cartTicketExportHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var items []models.OrderItem
 	for _, line := range lines {
+		productName := line.Product.Name
+		if line.ModelName != "" {
+			productName = productName + " (" + line.ModelName + ")"
+		}
 		items = append(items, models.OrderItem{
-			ProductName: line.Product.Name,
+			ProductName: productName,
 			Brand:       line.Product.Brand,
 			Unit:        line.Product.Unit,
 			Qty:         line.Qty,

@@ -13,8 +13,9 @@ import (
 	"shoper/models"
 )
 
-func readCart(r *http.Request) map[int64]int {
-	cart := map[int64]int{}
+// readCart 读取购物车 cookie，返回 map[string]int，key 格式为 "productID:modelID"
+func readCart(r *http.Request) map[string]int {
+	cart := map[string]int{}
 	cookie, err := r.Cookie("cart")
 	if err != nil || cookie.Value == "" {
 		return cart
@@ -28,43 +29,92 @@ func readCart(r *http.Request) map[int64]int {
 		return cart
 	}
 	for k, v := range raw {
-		id, _ := strconv.ParseInt(k, 10, 64)
-		if id > 0 && v > 0 {
-			cart[id] = v
+		if v > 0 {
+			// 兼容旧格式（纯 productID）和新格式（productID:modelID）
+			if !strings.Contains(k, ":") {
+				k = k + ":0"
+			}
+			cart[k] = v
 		}
 	}
 	return cart
 }
 
-func writeCart(w http.ResponseWriter, cart map[int64]int) {
+func writeCart(w http.ResponseWriter, cart map[string]int) {
 	raw := map[string]int{}
-	for id, qty := range cart {
+	for key, qty := range cart {
 		if qty > 0 {
-			raw[strconv.FormatInt(id, 10)] = qty
+			raw[key] = qty
 		}
 	}
 	b, _ := json.Marshal(raw)
 	http.SetCookie(w, &http.Cookie{Name: "cart", Value: base64.RawURLEncoding.EncodeToString(b), Path: "/", MaxAge: 86400 * 30, HttpOnly: true, SameSite: http.SameSiteLaxMode})
 }
 
+// cartKey 生成购物车 key
+func cartKey(productID, modelID int64) string {
+	return strconv.FormatInt(productID, 10) + ":" + strconv.FormatInt(modelID, 10)
+}
+
+// parseCartKey 解析购物车 key，返回 productID 和 modelID
+func parseCartKey(key string) (int64, int64) {
+	parts := strings.SplitN(key, ":", 2)
+	productID, _ := strconv.ParseInt(parts[0], 10, 64)
+	modelID := int64(0)
+	if len(parts) > 1 {
+		modelID, _ = strconv.ParseInt(parts[1], 10, 64)
+	}
+	return productID, modelID
+}
+
 func cartLines(r *http.Request) ([]models.CartLine, int64, error) {
 	cart := readCart(r)
 	var lines []models.CartLine
 	var total int64
-	for id, qty := range cart {
-		p, err := db.GetProductByID(id)
+	for key, qty := range cart {
+		productID, modelID := parseCartKey(key)
+		p, err := db.GetProductByID(productID)
 		if err != nil {
 			continue
 		}
-		sub := int64(qty) * p.PriceCents
+		// 找到选中的型号
+		var model *models.ProductModel
+		for i := range p.Models {
+			if p.Models[i].ID == modelID {
+				model = &p.Models[i]
+				break
+			}
+		}
+		if model == nil && len(p.Models) > 0 {
+			model = &p.Models[0]
+		}
+		priceCents := int64(0)
+		unit := ""
+		modelName := ""
+		if model != nil {
+			priceCents = model.PriceCents
+			unit = model.Unit
+			modelName = model.ModelName
+		}
+		p.PriceCents = priceCents
+		p.Unit = unit
+		sub := int64(qty) * priceCents
 		total += sub
-		lines = append(lines, models.CartLine{Product: p, Qty: qty, SubCents: sub})
+		lines = append(lines, models.CartLine{Product: p, Qty: qty, SubCents: sub, ModelID: modelID, ModelName: modelName})
 	}
 	return lines, total, nil
 }
 
 func cartCount(r *http.Request) int {
-	return len(readCart(r))
+	cart := readCart(r)
+	count := 0
+	for key := range cart {
+		productID, _ := parseCartKey(key)
+		if _, err := db.GetProductByID(productID); err == nil {
+			count++
+		}
+	}
+	return count
 }
 
 func cartHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,15 +132,17 @@ func addCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	modelID, _ := strconv.ParseInt(r.FormValue("model_id"), 10, 64)
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
 	if qty < 1 {
 		qty = 1
 	}
+	key := cartKey(id, modelID)
 	cart := readCart(r)
 	if r.FormValue("mode") == "set" {
-		cart[id] = qty
+		cart[key] = qty
 	} else {
-		cart[id] += qty
+		cart[key] += qty
 	}
 	writeCart(w, cart)
 	if r.FormValue("next") != "" {
@@ -106,8 +158,10 @@ func removeCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	modelID, _ := strconv.ParseInt(r.FormValue("model_id"), 10, 64)
+	key := cartKey(id, modelID)
 	cart := readCart(r)
-	delete(cart, id)
+	delete(cart, key)
 	writeCart(w, cart)
 	http.Redirect(w, r, "/cart", http.StatusSeeOther)
 }
@@ -118,12 +172,14 @@ func updateCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, _ := strconv.ParseInt(r.FormValue("product_id"), 10, 64)
+	modelID, _ := strconv.ParseInt(r.FormValue("model_id"), 10, 64)
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
+	key := cartKey(id, modelID)
 	cart := readCart(r)
 	if qty <= 0 {
-		delete(cart, id)
+		delete(cart, key)
 	} else {
-		cart[id] = qty
+		cart[key] = qty
 	}
 	writeCart(w, cart)
 	http.Redirect(w, r, "/cart", http.StatusSeeOther)
@@ -171,9 +227,13 @@ func createOrderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	orderID, _ := res.LastInsertId()
 	for _, line := range lines {
+		productName := line.Product.Name
+		if line.ModelName != "" {
+			productName = productName + " (" + line.ModelName + ")"
+		}
 		_, _ = db.DB.Exec(`INSERT INTO order_items (order_id, product_id, product_name, brand, unit, qty, price_cents, line_cents) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			orderID, line.Product.ID, line.Product.Name, line.Product.Brand, line.Product.Unit, line.Qty, line.Product.PriceCents, line.SubCents)
+			orderID, line.Product.ID, productName, line.Product.Brand, line.Product.Unit, line.Qty, line.Product.PriceCents, line.SubCents)
 	}
-	writeCart(w, map[int64]int{})
+	writeCart(w, map[string]int{})
 	http.Redirect(w, r, "/track?hash="+hash+"&phone="+phone, http.StatusSeeOther)
 }

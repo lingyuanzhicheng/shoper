@@ -28,6 +28,9 @@ var staticFS embed.FS
 //go:embed assets/MaShanZheng.ttf
 var ticketFontFS embed.FS
 
+//go:embed assets/favicon.ico
+var faviconFS embed.FS
+
 func main() {
 	envPhone := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_PHONE"))
 	envKey := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_KEY"))
@@ -96,6 +99,11 @@ func main() {
 	mux := http.NewServeMux()
 	mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
+	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/x-icon")
+		data, _ := faviconFS.ReadFile("assets/favicon.ico")
+		w.Write(data)
+	})
 	handlers.RegisterRoutes(mux)
 
 	log.Println("Shoper listening on http://localhost:8080")

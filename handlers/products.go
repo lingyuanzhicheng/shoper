@@ -19,6 +19,20 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 	brand := strings.TrimSpace(r.URL.Query().Get("brand"))
 	catID, _ := parseInt64(r.URL.Query().Get("cat"))
 	tagID, _ := parseInt64(r.URL.Query().Get("tag"))
+	tagStrs := r.URL.Query()["tags"]
+	var tagIDs []int64
+	tagIDMap := map[int64]bool{}
+	for _, s := range tagStrs {
+		id, err := parseInt64(s)
+		if err == nil && id > 0 {
+			tagIDs = append(tagIDs, id)
+			tagIDMap[id] = true
+		}
+	}
+	if tagID > 0 && len(tagIDs) == 0 {
+		tagIDs = []int64{tagID}
+		tagIDMap[tagID] = true
+	}
 
 	catName := ""
 	var tags []models.Tag
@@ -37,7 +51,7 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page, size := parsePage(r)
-	products, total, err := db.ListProductsPaged(q, group, brand, page, size)
+	products, total, err := db.ListProductsPaged(q, group, brand, tagIDs, page, size)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 		return
@@ -47,7 +61,7 @@ func productsHandler(w http.ResponseWriter, r *http.Request) {
 	if catName != "" {
 		title = catName + " - Shoper"
 	}
-	render(w, r, models.PageData{View: "products", Title: title, Query: q, Group: group, Brand: brand, Products: products, AllCategories: categories, CategoryID: catID, CategoryName: catName, Tags: tags, TagID: tagID, Pagination: buildPagination("/products", filterQuery(r), page, size, total)})
+	render(w, r, models.PageData{View: "products", Title: title, Query: q, Group: group, Brand: brand, Products: products, AllCategories: categories, CategoryID: catID, CategoryName: catName, Tags: tags, TagID: tagID, TagIDs: tagIDMap, Pagination: buildPagination("/products", filterQuery(r), page, size, total)})
 }
 
 func brandsHandler(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +110,16 @@ func productHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("added") == "1" {
 		message = "已添加到购物车，请前往购物车提交订单"
 	}
-	product.CartQty = readCart(r)[product.ID]
+	// 查找购物车中此商品的数量（任意型号）
+	cart := readCart(r)
+	cartQty := 0
+	for key, qty := range cart {
+		pid, _ := parseCartKey(key)
+		if pid == product.ID {
+			cartQty += qty
+		}
+	}
+	product.CartQty = cartQty
 
 	render(w, r, models.PageData{View: "product", Title: product.Name + " - Shoper", Product: product, Message: message, MessageType: "success", ProductBodyRaw: product.Body, DescriptionRaw: product.Description, Tags: product.Tags})
 }

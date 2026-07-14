@@ -1,6 +1,13 @@
 {{define "content_product"}}
                 <div class="page-header"><div><h2 class="page-header-title">商品详情</h2></div></div>
-                <div class="product-detail-wrap" x-data="{qty:{{if gt .Product.CartQty 0}}{{.Product.CartQty}}{{else}}1{{end}}, price: {{.Product.PriceCents}}}">
+                <div class="product-detail-wrap" x-data='{
+                    qty: {{if gt .Product.CartQty 0}}{{.Product.CartQty}}{{else}}1{{end}},
+                    modelID: {{if .Product.Models}}{{(index .Product.Models 0).ID}}{{else}}0{{end}},
+                    models: {{json .Product.Models}},
+                    get selectedModel() { return this.models.find(m => m.id === this.modelID) || this.models[0] || {price_cents: 0, unit: ""} },
+                    get price() { return this.selectedModel.price_cents },
+                    get unit() { return this.selectedModel.unit }
+                }'>
                 <div class="product-detail-grid grid grid-cols-1 lg:grid-cols-2">
                     <div class="product-gallery business-card" x-data="{active:0, images: [{{range $i, $img := .Product.Images}}{{if $i}},{{end}}'{{$img}}'{{end}}]}">
                         <div class="media media-4x3 rounded-lg shadow-lg product-main-media">
@@ -12,8 +19,9 @@
                     </div>
                     <div class="product-summary business-card">
                         <div class="flex items-center mb-4"><img src="{{.Product.BrandLogo}}" class="size-11 rounded-full mr-3" alt="{{.Product.Brand}}"><div><div class="text-sm text-gray-500">{{.Product.Brand}}</div><h1 class="text-2xl font-semibold dark:text-white">{{.Product.Name}}</h1></div></div>
-                        <div class="text-3xl font-bold text-red-600 mb-4"><span class="text-red-600">¥{{price .Product.PriceCents}}</span> <span class="text-sm text-gray-400">/ {{.Product.Unit}}</span></div>
-                        {{if .Tags}}<div class="flex flex-wrap gap-2 mb-4">{{range .Tags}}<span class="product-tag-chip">{{.Name}}</span>{{end}}</div>{{end}}
+                        <div class="text-3xl font-bold text-red-600 mb-4"><span class="text-red-600">¥<span x-text="(price / 100).toFixed(2)"></span></span> <span class="text-sm text-gray-400">/ <span x-text="unit"></span></span></div>
+                        {{if or .Product.Group .Tags}}<div class="flex flex-wrap items-end gap-2 mb-4">{{if .Product.Group}}<span class="product-cat-chip">{{.Product.Group}}</span>{{end}}{{range .Tags}}<span class="product-tag-chip">{{.Name}}</span>{{end}}</div>{{end}}
+                        {{if gt (len .Product.Models) 0}}<div class="mb-4"><div class="detail-model-grid"><template x-for="m in models" :key="m.id"><button type="button" class="detail-model-item" :class="{'active': m.id === modelID}" @click="modelID = m.id"><span class="model-item-name" x-text="m.name"></span><span class="model-item-price">¥<span x-text="(m.price_cents / 100).toFixed(2)"></span> / <span x-text="m.unit"></span></span></button></template></div></div>{{end}}
                         <div class="product-summary-scroll"><div class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300" id="md-description" data-md="{{.DescriptionRaw}}"></div></div>
                     </div>
                 </div>
@@ -25,6 +33,7 @@
                 {{if and .Feature.TradeEnabled (or .Feature.CartEnabled .IsAdmin)}}
                 <form method="post" action="/cart/add" class="product-buy-form product-purchase-dock">
                     <input type="hidden" name="product_id" value="{{.Product.ID}}">
+                    <input type="hidden" name="model_id" x-model="modelID">
                     <input type="hidden" name="next" value="/product/{{.Product.Slug}}?added=1">
                     <input type="hidden" name="mode" value="set">
                     <div class="dock-fields">

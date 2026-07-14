@@ -14,14 +14,29 @@ type productScanner interface {
 
 func scanProduct(s productScanner) (models.Product, error) {
 	var p models.Product
-	err := s.Scan(&p.ID, &p.Slug, &p.Group, &p.Name, &p.Brand, &p.BrandLogo, &p.Unit, &p.PriceCents, &p.Description, &p.Body)
+	err := s.Scan(&p.ID, &p.Slug, &p.Group, &p.Name, &p.Brand, &p.BrandLogo, &p.Description, &p.Body)
 	return p, err
+}
+
+// populateProductFields 从最低价格的型号填充 PriceCents 和 Unit（列表页显示起步价）
+func populateProductFields(p *models.Product) {
+	if len(p.Models) == 0 {
+		return
+	}
+	min := p.Models[0]
+	for _, m := range p.Models[1:] {
+		if m.PriceCents < min.PriceCents {
+			min = m
+		}
+	}
+	p.PriceCents = min.PriceCents
+	p.Unit = min.Unit
 }
 
 func ListProducts(q, group, brand string, limit int) ([]models.Product, error) {
 	args := []any{}
 	where := []string{}
-	query := `SELECT id, slug, group_name, name, brand, brand_logo, unit, price_cents, description, body FROM products`
+	query := `SELECT id, slug, group_name, name, brand, brand_logo, description, body FROM products`
 	if q != "" {
 		where = append(where, `(name LIKE ? OR brand LIKE ? OR description LIKE ? OR group_name LIKE ?)`)
 		like := "%" + q + "%"
@@ -56,30 +71,36 @@ func ListProducts(q, group, brand string, limit int) ([]models.Product, error) {
 		}
 		p.Images, _ = ProductImages(p.ID)
 		p.Tags, _ = GetProductTags(p.ID)
+		p.Models, _ = GetProductModels(p.ID)
+		populateProductFields(&p)
 		products = append(products, p)
 	}
 	return products, rows.Err()
 }
 
 func GetProductBySlug(slug string) (models.Product, error) {
-	row := DB.QueryRow(`SELECT id, slug, group_name, name, brand, brand_logo, unit, price_cents, description, body FROM products WHERE slug = ?`, slug)
+	row := DB.QueryRow(`SELECT id, slug, group_name, name, brand, brand_logo, description, body FROM products WHERE slug = ?`, slug)
 	p, err := scanProduct(row)
 	if err != nil {
 		return models.Product{}, err
 	}
 	p.Images, _ = ProductImages(p.ID)
 	p.Tags, _ = GetProductTags(p.ID)
+	p.Models, _ = GetProductModels(p.ID)
+	populateProductFields(&p)
 	return p, nil
 }
 
 func GetProductByID(id int64) (models.Product, error) {
-	row := DB.QueryRow(`SELECT id, slug, group_name, name, brand, brand_logo, unit, price_cents, description, body FROM products WHERE id = ?`, id)
+	row := DB.QueryRow(`SELECT id, slug, group_name, name, brand, brand_logo, description, body FROM products WHERE id = ?`, id)
 	p, err := scanProduct(row)
 	if err != nil {
 		return models.Product{}, err
 	}
 	p.Images, _ = ProductImages(p.ID)
 	p.Tags, _ = GetProductTags(p.ID)
+	p.Models, _ = GetProductModels(p.ID)
+	populateProductFields(&p)
 	return p, nil
 }
 
@@ -167,6 +188,30 @@ func ReplaceProductTags(productID int64, tagIDs []int64) {
 	}
 }
 
+func GetProductModels(productID int64) ([]models.ProductModel, error) {
+	rows, err := DB.Query(`SELECT id, product_id, model_name, price_cents, unit, sort_order FROM product_models WHERE product_id = ? ORDER BY sort_order, id`, productID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []models.ProductModel
+	for rows.Next() {
+		var m models.ProductModel
+		if err := rows.Scan(&m.ID, &m.ProductID, &m.ModelName, &m.PriceCents, &m.Unit, &m.SortOrder); err != nil {
+			return nil, err
+		}
+		list = append(list, m)
+	}
+	return list, rows.Err()
+}
+
+func ReplaceProductModels(productID int64, ms []models.ProductModel) {
+	DB.Exec(`DELETE FROM product_models WHERE product_id = ?`, productID)
+	for i, m := range ms {
+		DB.Exec(`INSERT INTO product_models (product_id, model_name, price_cents, unit, sort_order) VALUES (?, ?, ?, ?, ?)`, productID, m.ModelName, m.PriceCents, m.Unit, i)
+	}
+}
+
 func ListProductsByIDs(ids []int64) ([]models.Product, error) {
 	if len(ids) == 0 {
 		return nil, nil
@@ -177,7 +222,7 @@ func ListProductsByIDs(ids []int64) ([]models.Product, error) {
 		placeholders[i] = "?"
 		args[i] = id
 	}
-	query := `SELECT id, slug, group_name, name, brand, brand_logo, unit, price_cents, description, body FROM products WHERE id IN (` + strings.Join(placeholders, ",") + `) ORDER BY id DESC`
+	query := `SELECT id, slug, group_name, name, brand, brand_logo, description, body FROM products WHERE id IN (` + strings.Join(placeholders, ",") + `) ORDER BY id DESC`
 	rows, err := DB.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -191,6 +236,8 @@ func ListProductsByIDs(ids []int64) ([]models.Product, error) {
 		}
 		p.Images, _ = ProductImages(p.ID)
 		p.Tags, _ = GetProductTags(p.ID)
+		p.Models, _ = GetProductModels(p.ID)
+		populateProductFields(&p)
 		products = append(products, p)
 	}
 	if err := rows.Err(); err != nil {

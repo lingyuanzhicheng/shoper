@@ -6,7 +6,7 @@ import (
 	"shoper/models"
 )
 
-func buildProductWhere(q, group, brand string) (string, []any) {
+func buildProductWhere(q, group, brand string, tagIDs []int64) (string, []any) {
 	args := []any{}
 	where := []string{}
 	if q != "" {
@@ -22,6 +22,14 @@ func buildProductWhere(q, group, brand string) (string, []any) {
 		where = append(where, `brand = ?`)
 		args = append(args, brand)
 	}
+	if len(tagIDs) > 0 {
+		placeholders := make([]string, len(tagIDs))
+		for i, id := range tagIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		where = append(where, `id IN (SELECT product_id FROM product_tags WHERE tag_id IN (`+strings.Join(placeholders, ",")+`))`)
+	}
 	clause := ""
 	if len(where) > 0 {
 		clause = ` WHERE ` + strings.Join(where, ` AND `)
@@ -29,14 +37,14 @@ func buildProductWhere(q, group, brand string) (string, []any) {
 	return clause, args
 }
 
-func ListProductsPaged(q, group, brand string, page, size int) ([]models.Product, int, error) {
+func ListProductsPaged(q, group, brand string, tagIDs []int64, page, size int) ([]models.Product, int, error) {
 	if size <= 0 {
 		size = 30
 	}
 	if page < 1 {
 		page = 1
 	}
-	clause, args := buildProductWhere(q, group, brand)
+	clause, args := buildProductWhere(q, group, brand, tagIDs)
 	var total int
 	countErr := DB.QueryRow(`SELECT COUNT(*) FROM products`+clause, args...).Scan(&total)
 	if countErr != nil {
@@ -46,7 +54,7 @@ func ListProductsPaged(q, group, brand string, page, size int) ([]models.Product
 		return []models.Product{}, 0, nil
 	}
 	offset := (page - 1) * size
-	query := `SELECT id, slug, group_name, name, brand, brand_logo, unit, price_cents, description, body FROM products` + clause + ` ORDER BY id DESC LIMIT ? OFFSET ?`
+	query := `SELECT id, slug, group_name, name, brand, brand_logo, description, body FROM products` + clause + ` ORDER BY id DESC LIMIT ? OFFSET ?`
 	args = append(args, size, offset)
 	rows, err := DB.Query(query, args...)
 	if err != nil {
@@ -61,6 +69,8 @@ func ListProductsPaged(q, group, brand string, page, size int) ([]models.Product
 		}
 		p.Images, _ = ProductImages(p.ID)
 		p.Tags, _ = GetProductTags(p.ID)
+		p.Models, _ = GetProductModels(p.ID)
+		populateProductFields(&p)
 		products = append(products, p)
 	}
 	return products, total, rows.Err()

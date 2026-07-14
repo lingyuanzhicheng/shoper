@@ -2,6 +2,10 @@
                 <div class="admin-shell">
                     <div class="page-header"><div><h2 class="page-header-title">分类管理</h2><p class="page-header-desc">管理商品分类与所属标签。</p></div></div>
                     <div class="cat-masonry">
+                        <button type="button" class="cat-create-tile cat-add-card" onclick="openCategoryModal()">
+                            <span class="cat-create-tile-icon">+</span>
+                            <span>添加分类</span>
+                        </button>
                         {{range .ParentCategories}}
                         <div class="cat-card" x-data="{addingTag:false}">
                             <div class="cat-card-header">
@@ -37,12 +41,6 @@
                             </div>
                         </div>
                         {{end}}
-                        <div class="cat-create-entry">
-                            <button type="button" class="cat-create-tile" onclick="openCategoryModal()">
-                                <span class="cat-create-tile-icon">+</span>
-                                <span>添加分类</span>
-                            </button>
-                        </div>
                     </div>
                     {{template "pagination" .}}
                 </div>

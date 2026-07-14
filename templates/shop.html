@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <title>{{.Title}}</title>
     <link rel="stylesheet" href="/static/tailwind.css">
     <link rel="stylesheet" href="/static/iconfont.css">
@@ -145,20 +146,20 @@
                 <button type="button" class="filter-chip" data-cat-id="{{.ID}}" data-group="{{.Name}}" onclick="setOrderExtraCategory(this)">{{.Name}}</button>
                 {{end}}
             </div>
-            <div class="filter-bar admin-product-filter order-extra-filter-bar" id="order-extra-tag-filter" style="display:none">
+            <div class="filter-bar admin-product-filter order-extra-filter-bar" id="order-extra-tag-filter" style="display:none;margin-top:8px">
                 <span class="filter-label">标签</span>
                 <button type="button" class="filter-chip active" data-tag-id="0" onclick="setOrderExtraTag(this)">全部</button>
             </div>
         </div>
         <div class="shop-product-grid order-extra-product-grid" id="order-extra-product-grid">
             {{range .AllProducts}}
-            <button type="button" class="product-card order-product-pick-card" onclick="selectOrderExtraProduct(this)" data-id="{{.ID}}" data-price="{{price .PriceCents}}" data-name="{{.Name}}" data-brand="{{.Brand}}" data-group="{{.Group}}" data-unit="{{.Unit}}" data-image="{{if .Images}}{{index .Images 0}}{{end}}">
+            <div class="product-card order-product-pick-card" onclick="selectOrderExtraProduct(this)" data-id="{{.ID}}" data-price="{{price .PriceCents}}" data-name="{{.Name}}" data-brand="{{.Brand}}" data-group="{{.Group}}" data-unit="{{.Unit}}" data-image="{{if .Images}}{{index .Images 0}}{{end}}" data-models='{{json .Models}}'>
                 <div class="media media-4x3">{{if .Images}}<div class="media-content rounded" style="background-image:url({{index .Images 0}})"></div>{{else}}<div class="media-content rounded flex items-center justify-center bg-gray-100 dark:bg-gray-800"><i class="sui-Photo text-gray-300 text-2xl"></i></div>{{end}}</div>
                 <div class="product-info text-sm">
                     <div class="product-title line-clamp-2">{{.Name}}</div>
-                    <div class="mt-3 flex items-center justify-between"><span class="text-xs text-gray-500">{{.Brand}}</span><span class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}</span><span class="text-gray-400"> / {{.Unit}}</span></span></div>
+                    <div class="mt-3 flex items-center justify-between"><span class="text-xs text-gray-500">{{.Brand}}</span><span class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}+</span><span class="text-gray-400"> / {{.Unit}}</span></span></div>
                 </div>
-            </button>
+            </div>
             {{end}}
         </div>
         <div class="pagination-bar modal-pagination-bar" id="order-extra-pagination" data-page="1" data-size="30" style="display:none">
@@ -287,7 +288,7 @@
                 <div class="media media-4x3">{{if .Images}}<div class="media-content rounded" style="background-image:url({{index .Images 0}})"></div>{{else}}<div class="media-content rounded flex items-center justify-center bg-gray-100 dark:bg-gray-800"><i class="sui-Photo text-gray-300 text-2xl"></i></div>{{end}}</div>
                 <div class="product-info text-sm">
                     <div class="product-title line-clamp-2">{{.Name}}</div>
-                    <div class="mt-3 flex items-center justify-between"><span class="text-xs text-gray-500">{{.Brand}}</span><span class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}</span><span class="text-gray-400"> / {{.Unit}}</span></span></div>
+                    <div class="mt-3 flex items-center justify-between"><span class="text-xs text-gray-500">{{.Brand}}</span><span class="text-xs"><span class="text-sm text-red-600 font-semibold">¥{{price .PriceCents}}+</span><span class="text-gray-400"> / {{.Unit}}</span></span></div>
                 </div>
             </button>
             {{end}}
@@ -347,23 +348,27 @@
             <input type="hidden" name="slug" id="product-modal-slug">
             <input type="hidden" name="brand_logo" id="product-modal-brand-logo">
             <input type="hidden" name="images_payload" id="product-modal-images-payload">
-            <input name="name" id="product-modal-name" class="cat-form-input" placeholder="商品名称" required>
-            <input name="price" id="product-modal-price" class="cat-form-input" placeholder="商品价格">
-            <input name="unit" id="product-modal-unit" class="cat-form-input" placeholder="商品单位">
-            <select name="brand" id="product-modal-brand" class="cat-form-input" onchange="syncProductBrandLogo()">
-                <option value="">无品牌</option>
-                {{range .AllBrands}}<option value="{{.Name}}" data-logo="{{.Logo}}">{{.Name}}</option>{{end}}
-            </select>
-            <select name="category_id" id="product-modal-category" class="cat-form-input" onchange="syncProductTagOptions()">
-                <option value="0">无分类</option>
-                {{range .AllCategories}}<option value="{{.ID}}" {{if eq $.CategoryID .ID}}selected{{end}}>{{.Name}}</option>{{end}}
-            </select>
-            <div class="product-tag-dropdown" id="product-modal-tag">
-                <button type="button" onclick="toggleProductTagDropdown()"><span id="product-modal-tag-label">无标签</span></button>
-                <div class="product-tag-dropdown-menu" id="product-modal-tag-options"></div>
-                <input type="hidden" name="tag_ids" id="product-modal-tags">
+            <input type="hidden" name="models_json" id="product-modal-models-json">
+            <div class="product-form-left">
+                <input name="name" id="product-modal-name" class="cat-form-input" placeholder="商品名称">
+                <select name="brand" id="product-modal-brand" class="cat-form-input" onchange="syncProductBrandLogo()">
+                    <option value="">无品牌</option>
+                    {{range .AllBrands}}<option value="{{.Name}}" data-logo="{{.Logo}}">{{.Name}}</option>{{end}}
+                </select>
+                <select name="category_id" id="product-modal-category" class="cat-form-input" onchange="syncProductTagOptions()">
+                    <option value="0">无分类</option>
+                    {{range .AllCategories}}<option value="{{.ID}}" {{if eq $.CategoryID .ID}}selected{{end}}>{{.Name}}</option>{{end}}
+                </select>
+                <div class="product-tag-dropdown" id="product-modal-tag">
+                    <button type="button" onclick="toggleProductTagDropdown()"><span id="product-modal-tag-label">无标签</span></button>
+                    <div class="product-tag-dropdown-menu" id="product-modal-tag-options"></div>
+                    <input type="hidden" name="tag_ids" id="product-modal-tags">
+                </div>
+                <textarea name="description" id="product-modal-description" class="cat-form-input product-modal-desc" placeholder="商品说明"></textarea>
             </div>
-            <textarea name="description" id="product-modal-description" class="cat-form-input product-modal-desc" placeholder="商品说明"></textarea>
+            <div class="product-form-right">
+                <div class="product-model-list" id="product-model-list"></div>
+            </div>
             <div class="product-image-manager"><div class="product-image-list" id="product-image-list"><button type="button" class="product-image-add" onclick="openProductImagePicker()">+ 添加图片</button></div></div>
             <div class="product-modal-body-wrap"><textarea name="body" id="product-modal-body" class="cat-form-input product-modal-body" placeholder="商品详情 Markdown"></textarea></div>
         </div>
@@ -628,6 +633,27 @@ window.loadTags = function(categoryId) {
 
 document.addEventListener('alpine:init', function() {});
 
+window.toggleTagFilter = function(tagID) {
+  var params = new URLSearchParams(window.location.search);
+  var tags = params.getAll('tags');
+  var id = String(tagID);
+  var idx = tags.indexOf(id);
+  if (idx >= 0) { tags.splice(idx, 1); } else { tags.push(id); }
+  params.delete('tags');
+  params.delete('tag');
+  params.delete('page');
+  tags.forEach(function(t) { params.append('tags', t); });
+  window.location.search = params.toString();
+};
+
+window.clearTagFilter = function() {
+  var params = new URLSearchParams(window.location.search);
+  params.delete('tags');
+  params.delete('tag');
+  params.delete('page');
+  window.location.search = params.toString();
+};
+
 var categoryDraftTags = [];
 
 window.openCategoryModal = function() {
@@ -636,7 +662,7 @@ window.openCategoryModal = function() {
   var modal = document.getElementById('category-modal');
   var nameInput = document.getElementById('category-modal-name');
   var tagInput = document.getElementById('category-modal-tag-input');
-  var card = document.querySelector('.cat-masonry .cat-card') || document.querySelector('.cat-create-entry');
+  var card = document.querySelector('.cat-masonry .cat-card') || document.querySelector('.cat-masonry .cat-add-card');
   var panel = modal ? modal.querySelector('.cat-modal-card') : null;
   if(!modal) return;
   if(card && panel) {
@@ -743,14 +769,56 @@ window.updateOrderStatus = function(status) {
     .catch(function(){ showToast('error', '网络错误'); });
 };
 
+window.submitOrderAmount = function() {
+  var form = document.querySelector('.order-detail-form');
+  if (!form) return;
+  var fd = new FormData(form);
+  fetch(form.action + '?ajax=1', {method: 'POST', body: fd}).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) {
+      showToast('success', '订单金额已更新');
+      var fmt = function(c) { return (c / 100).toFixed(2); };
+      var origEl = document.getElementById('order-original-total');
+      var liveEl = document.getElementById('order-live-total');
+      var tableEl = document.getElementById('order-table-total');
+      var paidEl = document.getElementById('order-paid-total');
+      var dueEl = document.getElementById('order-due-total');
+      if (liveEl) liveEl.textContent = '¥' + fmt(d.total_cents);
+      if (tableEl) tableEl.textContent = '¥' + fmt(d.total_cents);
+      if (paidEl) paidEl.textContent = '¥' + fmt(d.paid_cents);
+      if (dueEl) dueEl.textContent = '¥' + fmt(d.due_cents);
+      if (origEl) {
+        if (d.discount_cents > 0) {
+          origEl.textContent = '¥' + fmt(d.original_total);
+          origEl.classList.remove('hidden');
+        } else {
+          origEl.classList.add('hidden');
+        }
+      }
+    } else {
+      showToast('error', '保存失败');
+    }
+  }).catch(function(){ showToast('error', '网络错误'); });
+};
+
 window.submitOrderItems = function() {
   var form = document.querySelector('.order-detail-form');
   if (!form) return;
   var fd = new FormData(form);
-  fetch(form.action, {method: 'POST', body: fd}).then(function(r) {
-    if (r.ok) showToast('success', '商品列表已更新');
-    else showToast('error', '保存失败');
-  }).catch(function(){ showToast('error', '网络错误'); });
+  fetch(form.action + '?ajax=1', {method: 'POST', body: fd}).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.ok) {
+      showToast('success', '商品列表已更新');
+      return fetch(location.href).then(function(r) { return r.text(); });
+    }
+    throw new Error('保存失败');
+  }).then(function(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var newList = doc.querySelector('#order-items-list');
+    var oldList = document.querySelector('#order-items-list');
+    if (newList && oldList) {
+      oldList.innerHTML = newList.innerHTML;
+    }
+    recalcOrderDetail();
+  }).catch(function(e){ showToast('error', e.message || '网络错误'); });
 };
 
 window.recalcOrderDetail = function() {
@@ -891,6 +959,7 @@ window.openOrderExtraProductModal = function() {
 window.closeOrderExtraProductModal = function() {
   var modal = document.getElementById('order-extra-product-modal');
   if(!modal) return;
+  closeOrderExtraModelPanel();
   modal.classList.remove('is-open');
   modal.setAttribute('aria-hidden', 'true');
 };
@@ -1012,17 +1081,63 @@ window.orderExtraSetSize = function(size, btn) {
 };
 
 window.selectOrderExtraProduct = function(button) {
-  var data = {
+  var modelsRaw = button.getAttribute('data-models') || '[]';
+  var models;
+  try { models = JSON.parse(modelsRaw); } catch(e) { models = []; }
+  if (models.length === 0) { models = [{name: '默认', price_cents: 0, unit: '件'}]; }
+  closeOrderExtraModelPanel();
+  button.classList.add('model-selecting');
+  var listHtml = '<div class="pick-card-model-overlay">' +
+    '<button type="button" class="pick-card-model-cancel" onclick="closeOrderExtraModelPanel();event.stopPropagation();">&times;</button>' +
+    '<div class="pick-card-model-list">';
+  models.forEach(function(m, i) {
+    var price = (m.price_cents / 100).toFixed(2);
+    listHtml += '<button type="button" class="pick-card-model-item" data-idx="' + i + '" onclick="pickOrderExtraModel(this);event.stopPropagation();">' +
+      '<span class="pick-card-model-name">' + (m.name || '默认') + '</span>' +
+      '<span class="pick-card-model-price">¥' + price + ' / ' + (m.unit || '件') + '</span>' +
+      '</button>';
+  });
+  listHtml += '</div></div>';
+  button.insertAdjacentHTML('beforeend', listHtml);
+  button._models = models;
+  button._productData = {
     id: button.getAttribute('data-id') || '0',
     name: button.getAttribute('data-name') || '',
     brand: button.getAttribute('data-brand') || '',
-    price: button.getAttribute('data-price') || '0.00',
-    unit: button.getAttribute('data-unit') || '件',
     image: button.getAttribute('data-image') || ''
   };
+};
+
+window.pickOrderExtraModel = function(btn) {
+  var card = btn.closest('.order-product-pick-card');
+  if (!card) return;
+  var models = card._models || [];
+  var productData = card._productData || {};
+  var idx = parseInt(btn.getAttribute('data-idx'), 10) || 0;
+  var m = models[idx] || models[0] || {price_cents: 0, unit: '件'};
+  var fullName = productData.name || '';
+  var modelName = m.name || '默认';
+  if (fullName.indexOf('(') < 0) { fullName = fullName + ' (' + modelName + ')'; }
+  var data = {
+    id: productData.id || '0',
+    name: fullName,
+    brand: productData.brand || '',
+    price: (m.price_cents / 100).toFixed(2),
+    unit: m.unit || '件',
+    image: productData.image || ''
+  };
   addOrderItemRow(data);
+  closeOrderExtraModelPanel();
   closeOrderExtraProductModal();
   window.showToast && showToast('success', '已选择商品，保存订单后加入');
+};
+
+window.closeOrderExtraModelPanel = function() {
+  document.querySelectorAll('.order-product-pick-card.model-selecting').forEach(function(card) {
+    card.classList.remove('model-selecting');
+    var overlay = card.querySelector('.pick-card-model-overlay');
+    if (overlay) overlay.remove();
+  });
 };
 
 window.addOrderCustomItem = function() {
@@ -1047,10 +1162,12 @@ window.addOrderItemRow = function(data) {
   var imageHtml = data.image
     ? '<img src="' + data.image + '" class="cart-row-image" alt="' + (data.name || '商品') + '">'
     : '<div class="cart-row-image order-row-image-empty"><i class="sui-Bag"></i></div>';
-  var titleHtml = data.isCustom
-    ? '<input type="text" name="item_name" class="cart-row-title order-item-name" value="" placeholder="输入商品名称" oninput="recalcOrderDetail()"><input type="hidden" name="item_brand" value="商议">'
-    : '<div class="cart-row-title">' + (data.name || '') + '</div><input type="hidden" name="item_name" value="' + (data.name || '') + '"><input type="hidden" name="item_brand" value="' + (data.brand || '') + '">';
-  var brand = data.isCustom ? '商议' : (data.brand || '');
+  var titleHtml = '<textarea name="item_name" class="order-item-input order-item-name" rows="1" placeholder="输入商品名称">' + (data.name || '') + '</textarea>';
+  var metaHtml = '<div class="order-item-meta-row">' +
+    '<input type="text" name="item_brand" class="order-item-input order-item-brand" value="' + (data.brand || '商议') + '" placeholder="输入品牌">' +
+    '<input name="item_price" class="order-item-input order-item-price" value="' + (data.price || '0.00') + '" oninput="recalcOrderDetail()">' +
+    '<input name="item_unit" class="order-item-input order-item-unit" value="' + (data.unit || '件') + '">' +
+    '</div>';
   var rowHtml = '<div class="cart-row order-item-row order-detail-row order-new-row" data-new-id="' + tempId + '">' +
     '<input type="hidden" name="item_id" value="0">' +
     '<input type="hidden" name="item_product_id" value="' + (data.id || '0') + '">' +
@@ -1058,10 +1175,7 @@ window.addOrderItemRow = function(data) {
     '<input type="hidden" name="delivered_item" value="">' +
     '<input type="hidden" name="return_item" value="">' +
     imageHtml +
-    '<div class="order-info-cell"><div class="cart-row-body">' + titleHtml +
-    '<div class="cart-row-meta">' + brand + '</div>' +
-    '</div>' +
-    '<span class="order-price-unit-edit"><input name="item_price" class="order-item-input order-item-price" value="' + (data.price || '0.00') + '" oninput="recalcOrderDetail()"><input name="item_unit" class="order-item-input order-item-unit" value="' + (data.unit || '件') + '"></span></div>' +
+    '<div class="order-info-cell">' + titleHtml + metaHtml + '</div>' +
     '<div class="cart-qty-form"><input name="item_qty" class="order-item-input order-item-qty" value="1" oninput="recalcOrderDetail()"></div>' +
     '<div class="cart-row-price order-line-total">¥' + (data.price || '0.00') + '</div>' +
     '<div class="order-actions-cell cart-row-action"><button type="button" class="order-confirm-btn" disabled aria-label="确认商品">✓</button><button type="button" class="order-return-btn" disabled aria-label="售出"><i class="sui-Bag"></i></button><button type="button" class="order-delete-btn" onclick="removeOrderNewRow(this)" aria-label="删除商品" aria-pressed="false"><i class="sui-Trashcancontrol"></i></button></div>' +
@@ -1564,8 +1678,6 @@ window.openProductModal = function(button) {
   setProductModalValue('slug', button ? button.getAttribute('data-slug') : '');
   setProductModalValue('brand', button ? button.getAttribute('data-brand') : '');
   setProductModalValue('brand-logo', button ? button.getAttribute('data-brand-logo') : '');
-  setProductModalValue('unit', button ? button.getAttribute('data-unit') : '');
-  setProductModalValue('price', button ? button.getAttribute('data-price') : '');
   setProductModalValue('description', button ? button.getAttribute('data-description') : '');
   try { productImagesDraft = button && button.getAttribute('data-images') ? JSON.parse(button.getAttribute('data-images')) : []; } catch(e) { productImagesDraft = []; }
   var category = document.getElementById('product-modal-category');
@@ -1587,6 +1699,12 @@ window.openProductModal = function(button) {
   }
   syncProductTagOptions(savedTags);
   renderProductImages();
+  // 加载型号列表
+  var modelsData = [];
+  if(button && button.getAttribute('data-models')) {
+    try { modelsData = JSON.parse(button.getAttribute('data-models')) || []; } catch(e) { modelsData = []; }
+  }
+  loadModelRows(modelsData);
   modal.classList.add('is-open');
   modal.setAttribute('aria-hidden', 'false');
   setTimeout(function() {
@@ -1645,6 +1763,12 @@ window.toggleProductTagDropdown = function() {
   var dropdown = document.getElementById('product-modal-tag');
   if(dropdown) dropdown.classList.toggle('open');
 };
+document.addEventListener('click', function(e) {
+  var dropdown = document.getElementById('product-modal-tag');
+  if(dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});
 
 function updateProductTagLabel() {
   var label = document.getElementById('product-modal-tag-label');
@@ -1735,6 +1859,8 @@ window.confirmProductImageCrop = function() {
   canvas.width = 800;
   canvas.height = 600;
   var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 800, 600);
   var scale = productCrop.baseScale * productCrop.scale;
   ctx.drawImage(productCrop.img, -productCrop.x / scale, -productCrop.y / scale, productCrop.frameW / scale, productCrop.frameH / scale, 0, 0, 800, 600);
   productImagesDraft.push(canvas.toDataURL('image/jpeg', 0.88));
@@ -1749,9 +1875,121 @@ window.closeProductModal = function() {
   modal.setAttribute('aria-hidden', 'true');
 };
 
+/* ---- 型号列表 ---- */
+var modelRowSvgUp = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+var modelRowSvgDown = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+var modelRowSvgAdd = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
+var modelRowSvgDel = '<i class="sui-Trashcancontrol" style="font-size:14px"></i>';
+
+window.loadModelRows = function(data) {
+  var list = document.getElementById('product-model-list');
+  if(!list) return;
+  list.innerHTML = '';
+  if(data && data.length > 0) {
+    data.forEach(function(d) {
+      addModelRow({
+        name: d.name || '',
+        price: d.price_cents ? (d.price_cents / 100).toString() : (d.price || ''),
+        unit: d.unit || ''
+      });
+    });
+  } else {
+    addModelRow();
+  }
+};
+
+window.addModelRow = function(data) {
+  var list = document.getElementById('product-model-list');
+  if(!list) return;
+  var row = document.createElement('div');
+  row.className = 'product-model-row';
+  var name = data && data.name ? data.name : '';
+  var price = data && data.price ? data.price : '';
+  var unit = data && data.unit ? data.unit : '';
+  row.innerHTML =
+    '<div class="product-model-row-top">' +
+      '<input type="text" class="cat-form-input product-model-input" placeholder="型号" value="' + escapeAttr(name) + '">' +
+      '<input type="number" class="cat-form-input product-model-price" placeholder="单价" step="0.01" min="0" value="' + escapeAttr(price) + '">' +
+    '</div>' +
+    '<div class="product-model-row-bottom">' +
+      '<input type="text" class="cat-form-input product-model-unit" placeholder="单位" value="' + escapeAttr(unit) + '">' +
+      '<div class="product-model-btns">' +
+        '<button type="button" class="home-slide-btn" onclick="moveModelRow(this,-1)" title="上移">' + modelRowSvgUp + '</button>' +
+        '<button type="button" class="home-slide-btn" onclick="moveModelRow(this,1)" title="下移">' + modelRowSvgDown + '</button>' +
+        '<button type="button" class="home-slide-btn home-slide-btn-add" onclick="addModelRowAfter(this)" title="下方添加">' + modelRowSvgAdd + '</button>' +
+        '<button type="button" class="home-slide-btn home-slide-btn-del" onclick="removeModelRow(this)" title="删除">' + modelRowSvgDel + '</button>' +
+      '</div>' +
+    '</div>';
+  if(data && data.after) {
+    var ref = data.after.closest('.product-model-row');
+    if(ref && ref.nextSibling) { list.insertBefore(row, ref.nextSibling); }
+    else { list.appendChild(row); }
+  } else {
+    list.appendChild(row);
+  }
+  row.querySelector('.product-model-input').focus();
+};
+
+window.addModelRowAfter = function(btn) {
+  addModelRow({ after: btn });
+};
+
+window.removeModelRow = function(btn) {
+  var row = btn.closest('.product-model-row');
+  var list = document.getElementById('product-model-list');
+  if(row && list) {
+    if(list.children.length <= 1) { row.querySelector('.product-model-input').value = ''; row.querySelector('.product-model-price').value = ''; row.querySelector('.product-model-unit').value = ''; return; }
+    row.remove();
+  }
+};
+
+window.moveModelRow = function(btn, dir) {
+  var row = btn.closest('.product-model-row');
+  var list = document.getElementById('product-model-list');
+  if(!row || !list) return;
+  if(dir < 0 && row.previousElementSibling) { list.insertBefore(row, row.previousElementSibling); }
+  else if(dir > 0 && row.nextElementSibling) { list.insertBefore(row.nextElementSibling, row); }
+};
+
+window.collectModels = function() {
+  var list = document.getElementById('product-model-list');
+  var hidden = document.getElementById('product-modal-models-json');
+  if(!list || !hidden) return;
+  var items = [];
+  Array.prototype.forEach.call(list.querySelectorAll('.product-model-row'), function(row) {
+    var name = (row.querySelector('.product-model-input').value || '').trim();
+    var price = (row.querySelector('.product-model-price').value || '').trim();
+    var unit = (row.querySelector('.product-model-unit').value || '').trim();
+    if(name) items.push({ name: name, price: price, unit: unit });
+  });
+  hidden.value = JSON.stringify(items);
+};
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 document.addEventListener('click', function(e) {
   if(e.target && e.target.id === 'product-modal') closeProductModal();
 });
+
+(function() {
+  var form = document.getElementById('product-modal-form');
+  if(!form) return;
+  form.addEventListener('submit', function(e) {
+    var name = (document.getElementById('product-modal-name') || {}).value || '';
+    var brand = (document.getElementById('product-modal-brand') || {}).value || '';
+    var missing = [];
+    if(!name.trim()) missing.push('商品名称');
+    if(!brand.trim()) missing.push('品牌');
+    if(missing.length) {
+      e.preventDefault();
+      window.showToast && showToast('error', '请填写必填字段：' + missing.join('、'));
+      return;
+    }
+    collectModels();
+  });
+})();
 
 window.openBrandModal = function(button) {
   var modal = document.getElementById('brand-modal');
@@ -1882,15 +2120,17 @@ function clampBrandCrop() {
 window.confirmBrandLogoCrop = function() {
   if(!brandCrop.img) return;
   var canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
+  canvas.width = 240;
+  canvas.height = 240;
   var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 240, 240);
   var scale = brandCrop.baseScale * brandCrop.scale;
   var sx = -brandCrop.x / scale;
   var sy = -brandCrop.y / scale;
   var sw = brandCrop.frame / scale;
   var sh = brandCrop.frame / scale;
-  ctx.drawImage(brandCrop.img, sx, sy, sw, sh, 0, 0, 64, 64);
+  ctx.drawImage(brandCrop.img, sx, sy, sw, sh, 0, 0, 240, 240);
   var dataURL = canvas.toDataURL('image/jpeg', 0.9);
   setBrandModalValue('logo-data', dataURL);
   setBrandModalValue('logo', '');

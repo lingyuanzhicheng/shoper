@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -149,7 +150,15 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		itemsTotal += lineCents
-		_, _ = db.DB.Exec(`UPDATE order_items SET unit = ?, qty = ?, price_cents = ?, line_cents = ?, sort_order = ?, delivered = ?, is_return = ? WHERE id = ? AND order_id = ?`, unit, qty, priceCents, lineCents, sortOrder, delivered, isReturn, itemID, order.ID)
+		name := strings.TrimSpace(utils.ValueAt(names, i))
+		if name == "" {
+			name = "自定义商品"
+		}
+		brand := strings.TrimSpace(utils.ValueAt(brands, i))
+		if brand == "" {
+			brand = "商议"
+		}
+		_, _ = db.DB.Exec(`UPDATE order_items SET product_name = ?, brand = ?, unit = ?, qty = ?, price_cents = ?, line_cents = ?, sort_order = ?, delivered = ?, is_return = ? WHERE id = ? AND order_id = ?`, name, brand, unit, qty, priceCents, lineCents, sortOrder, delivered, isReturn, itemID, order.ID)
 	}
 	if itemsTotal == 0 {
 		itemsTotal = int64(totalYuan*100) + discountCents
@@ -165,6 +174,22 @@ func adminOrderUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := db.DB.Exec(`UPDATE orders SET status = ?, total_cents = ?, archived = ?, discount_cents = ?, paid_cents = ?, contact_name = ?, phone = ?, address = ?, community = ?, building = ?, unit_no = ?, room = ?, notes = ? WHERE hash = ?`, status, finalTotal, archived, discountCents, paidCents, contactName, phone, address, community, building, unitNo, room, notes, hash)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
+		return
+	}
+	if r.URL.Query().Get("ajax") == "1" {
+		dueCents := finalTotal - paidCents
+		if dueCents < 0 {
+			dueCents = 0
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"ok":             true,
+			"total_cents":    finalTotal,
+			"discount_cents": discountCents,
+			"paid_cents":     paidCents,
+			"original_total": itemsTotal,
+			"due_cents":      dueCents,
+		})
 		return
 	}
 	http.Redirect(w, r, "/admin/orders/"+hash, http.StatusSeeOther)

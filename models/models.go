@@ -17,6 +17,16 @@ type Product struct {
 	CategoryID  int64
 	Body        string
 	Tags        []Tag
+	Models      []ProductModel
+}
+
+type ProductModel struct {
+	ID         int64  `json:"id"`
+	ProductID  int64  `json:"product_id"`
+	ModelName  string `json:"name"`
+	PriceCents int64  `json:"price_cents"`
+	Unit       string `json:"unit"`
+	SortOrder  int    `json:"sort_order"`
 }
 
 type Category struct {
@@ -46,9 +56,11 @@ type Brand struct {
 }
 
 type CartLine struct {
-	Product  Product
-	Qty      int
-	SubCents int64
+	Product   Product
+	Qty       int
+	SubCents  int64
+	ModelID   int64
+	ModelName string
 }
 
 type Order struct {
@@ -145,6 +157,7 @@ type PageData struct {
 	CategoryID       int64
 	CategoryName     string
 	TagID            int64
+	TagIDs           map[int64]bool
 	Tags             []Tag
 
 	Community string
