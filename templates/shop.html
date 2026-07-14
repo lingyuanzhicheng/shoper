@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <title>{{.Title}}</title>
-    <link rel="stylesheet" href="/static/tailwind.css">
-    <link rel="stylesheet" href="/static/iconfont.css">
-    <link rel="stylesheet" href="/static/sinner.css">
-    <link rel="stylesheet" href="/static/schelper.css?v=14">
-    <link rel="stylesheet" href="/static/highlight-github.css" media="(prefers-color-scheme: light)">
-    <link rel="stylesheet" href="/static/highlight-github-dark.css" media="(prefers-color-scheme: dark)">
-    <script defer src="/static/marked.min.js"></script>
-    <script defer src="/static/highlight.min.js"></script>
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+    <link rel="stylesheet" href="/static/css/iconfont.css">
+    <link rel="stylesheet" href="/static/css/sinner.css">
+    <link rel="stylesheet" href="/static/css/schelper.css?v=14">
+    <link rel="stylesheet" href="/static/css/highlight-github.css" media="(prefers-color-scheme: light)">
+    <link rel="stylesheet" href="/static/css/highlight-github-dark.css" media="(prefers-color-scheme: dark)">
+    <script defer src="/static/js/marked.min.js"></script>
+    <script defer src="/static/js/highlight.min.js"></script>
     <style>
     @font-face {
       font-family: 'Ma Shan Zheng';
       font-style: normal;
       font-weight: 400;
       font-display: swap;
-      src: url('/static/MaShanZheng.ttf') format('truetype');
+      src: url('/static/fonts/MaShanZheng.ttf') format('truetype');
     }
     </style>
-    <link rel="stylesheet" href="/static/simplemde.min.css">
+    <link rel="stylesheet" href="/static/css/simplemde.min.css">
     <script>
     document.addEventListener('alpine:init', function() {
       Alpine.data('data', () => ({}));
@@ -30,7 +30,7 @@
       Alpine.store('switch', { searchtext:'', isSearch:true, isSideMenuOpen:true, toggleSearch(){this.isSearch=!this.isSearch}, toggleSideMenu(){this.isSideMenuOpen=!this.isSideMenuOpen} });
     });
     </script>
-    <script defer src="/static/alpine.min.js"></script>
+    <script defer src="/static/js/alpine.min.js"></script>
 </head>
 <body class="dark:bg-gray-900 maoboli">
 <div class="flex min-h-screen" id="main">
@@ -577,7 +577,7 @@ window.renderMarkdown = function() {
 };
 window.addEventListener('DOMContentLoaded', window.renderMarkdown);
 </script>
-<script defer src="/static/simplemde.min.js"></script>
+<script defer src="/static/js/simplemde.min.js"></script>
 <script>
 window.getCookie = function(name) {
   var m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');

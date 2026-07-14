@@ -57,8 +57,7 @@ shoper/
 ├── models/              # 数据模型
 ├── utils/               # 工具函数
 ├── templates/           # HTML 模板
-├── static/              # 静态资源（CSS/JS/字体）
-├── assets/              # 嵌入式资源（字体/favicon）
+├── static/              # 静态资源（CSS/JS/字体/favicon）
 ├── data/                # SQLite 数据库（运行时生成）
 └── uploads/             # 上传文件（运行时生成）
 ```

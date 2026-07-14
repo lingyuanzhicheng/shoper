@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -27,13 +28,6 @@ var templateFS embed.FS
 
 //go:embed static/*
 var staticFS embed.FS
-
-//go:embed assets/NotoSansSC.otf
-//go:embed assets/MaShanZheng.ttf
-var ticketFontFS embed.FS
-
-//go:embed assets/favicon.ico
-var faviconFS embed.FS
 
 func main() {
 	envUsername := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_USERNAME"))
@@ -91,23 +85,28 @@ func main() {
 	if db.GetSetting("about_content") == "" {
 		db.SetSetting("about_content", "Shoper 是一家专注于空间材料与家居产品的商品目录平台。我们精选地面材料、墙面装饰、灯光照明、家具收纳与五金配件等品类，为客户提供清晰的产品信息与便捷的询价、下单体验。\n\n当前平台采用订单制管理：提交购物车后生成订单号，凭订单号和联系电话即可追踪订单状态。如需进一步咨询或定制方案，请联系客服。\n\n我们的产品适用于住宅、商业空间与设计师项目，支持按分类、品牌、关键词精准筛选，帮助您快速找到合适的产品。")
 	}
+	if db.GetSetting("static_cache_hours") == "" {
+		db.SetSetting("static_cache_hours", "24")
+	}
 
 	// 注册票据渲染字体
-	if fontBytes, err := ticketFontFS.ReadFile("assets/NotoSansSC.otf"); err == nil {
+	if fontBytes, err := staticFS.ReadFile("static/fonts/NotoSansSC.otf"); err == nil {
 		handlers.RegisterTicketFont(fontBytes)
 	}
-	if maBytes, err := ticketFontFS.ReadFile("assets/MaShanZheng.ttf"); err == nil {
+	if maBytes, err := staticFS.ReadFile("static/fonts/MaShanZheng.ttf"); err == nil {
 		handlers.RegisterTicketBrandFont(maBytes)
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/static/", http.FileServer(http.FS(staticFS)))
+	staticHandler := http.FileServer(http.FS(staticFS))
+	mux.Handle("/static/", cacheStatic(staticHandler))
 	mux.Handle("/uploads/product/", http.StripPrefix("/uploads/product/", http.FileServer(http.Dir("uploads/product"))))
 	mux.Handle("/uploads/brand/", http.StripPrefix("/uploads/brand/", http.FileServer(http.Dir("uploads/brand"))))
 	mux.Handle("/uploads/extra/", http.StripPrefix("/uploads/extra/", http.FileServer(http.Dir("uploads/extra"))))
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/x-icon")
-		data, _ := faviconFS.ReadFile("assets/favicon.ico")
+		setStaticCacheHeader(w)
+		data, _ := staticFS.ReadFile("static/favicon.ico")
 		w.Write(data)
 	})
 	handlers.RegisterRoutes(mux)
@@ -136,4 +135,28 @@ func main() {
 		log.Printf("database close error: %v", err)
 	}
 	log.Println("Shoper stopped")
+}
+
+// setStaticCacheHeader 根据数据库设置 static_cache_hours 写入 Cache-Control 头。
+// 值为 0 时不缓存（no-cache），>0 时缓存对应小时数。
+func setStaticCacheHeader(w http.ResponseWriter) {
+	hours := 24
+	if v := db.GetSetting("static_cache_hours"); v != "" {
+		if h, err := strconv.Atoi(v); err == nil && h >= 0 {
+			hours = h
+		}
+	}
+	if hours <= 0 {
+		w.Header().Set("Cache-Control", "no-cache")
+	} else {
+		w.Header().Set("Cache-Control", "public, max-age="+strconv.Itoa(hours*3600))
+	}
+}
+
+// cacheStatic 为静态资源 FileServer 包装缓存头。
+func cacheStatic(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		setStaticCacheHeader(w)
+		h.ServeHTTP(w, r)
+	})
 }

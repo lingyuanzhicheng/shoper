@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"shoper/db"
@@ -33,6 +34,12 @@ func adminSettingsAccountHandler(w http.ResponseWriter, r *http.Request) {
 		if platformSubtitle != "" {
 			db.SetSetting("platform_subtitle", platformSubtitle)
 		}
+		// 静态资源缓存时间（小时），仅当平台信息表单提交时处理
+		if cacheHours := strings.TrimSpace(r.FormValue("static_cache_hours")); cacheHours != "" {
+			if h, err := strconv.Atoi(cacheHours); err == nil && h >= 0 {
+				db.SetSetting("static_cache_hours", strconv.Itoa(h))
+			}
+		}
 		if newUsername != "" && newUsername != middleware.GetUsername() {
 			db.SetSetting("admin_username", newUsername)
 			middleware.SetUsername(newUsername)
@@ -45,11 +52,16 @@ func adminSettingsAccountHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/admin/settings/account", http.StatusSeeOther)
 		return
 	}
+	sch := db.GetSetting("static_cache_hours")
+	if sch == "" {
+		sch = "24"
+	}
 	render(w, r, models.PageData{
 		View:             "admin",
 		AdminView:        "settings-account",
 		Title:            "账户密码 - " + pn,
 		PlatformName:     pn,
+		StaticCacheHours: sch,
 		SettingsPassword: middleware.GetPassword(),
 	})
 }

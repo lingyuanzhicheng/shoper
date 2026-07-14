@@ -170,6 +170,7 @@ type PageData struct {
 
 	PlatformName     string
 	PlatformSubtitle string
+	StaticCacheHours string
 	AboutTitle       string
 	AboutContent     template.HTML
 	AboutContentRaw  string
