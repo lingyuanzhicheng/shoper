@@ -1,0 +1,16 @@
+services:
+  shoper:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SHOPER_ADMIN_USERNAME=shoper
+      - SHOPER_ADMIN_PASSWORD=shoper
+    volumes:
+      - shoper-data:/app/data
+      - shoper-uploads:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  shoper-data:
+  shoper-uploads:
