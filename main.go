@@ -14,6 +14,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	_ "time/tzdata"
 
 	"shoper/db"
 	"shoper/handlers"
@@ -30,6 +31,10 @@ var templateFS embed.FS
 var staticFS embed.FS
 
 func main() {
+	// 固定时区为 Asia/Shanghai，确保 time.Now() 返回东八区时间
+	os.Setenv("TZ", "Asia/Shanghai")
+	time.Local = mustLoadShanghai()
+
 	envUsername := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_USERNAME"))
 	envPassword := strings.TrimSpace(os.Getenv("SHOPER_ADMIN_PASSWORD"))
 	if envUsername == "" || envPassword == "" {
@@ -135,6 +140,14 @@ func main() {
 		log.Printf("database close error: %v", err)
 	}
 	log.Println("Shoper stopped")
+}
+
+// mustLoadShanghai 加载 Asia/Shanghai 时区，若系统缺少时区数据则回退到固定 UTC+8。
+func mustLoadShanghai() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Shanghai"); err == nil {
+		return loc
+	}
+	return time.FixedZone("CST", 8*3600)
 }
 
 // setStaticCacheHeader 根据数据库设置 static_cache_hours 写入 Cache-Control 头。
